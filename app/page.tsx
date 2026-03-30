@@ -59,7 +59,7 @@ export default async function HomePage() {
   return (
     <>
       {/* HERO */}
-      <section className="pt-16 grid md:grid-cols-2 min-h-screen relative overflow-hidden">
+      <section className="pt-16 md:grid md:grid-cols-2 md:min-h-screen relative overflow-hidden">
         {/* Left: text */}
         <div className="flex flex-col justify-center px-8 md:px-16 lg:px-24 py-20 bg-gray-warm relative z-10">
           {/* Diagonal right edge on desktop */}
@@ -100,7 +100,7 @@ export default async function HomePage() {
         </div>
 
         {/* Right: hero image */}
-        <div className="relative min-h-[60vw] md:min-h-full bg-[#c8c0b8] order-first md:order-last">
+        <div className="relative h-[60vw] md:h-auto md:self-stretch bg-[#c8c0b8] order-first md:order-last">
           {/* Replace src with real club action photo */}
           <Image
             src="https://images.unsplash.com/photo-1571902943202-507ec2618e8f?w=900&q=80&fit=crop&crop=top"
