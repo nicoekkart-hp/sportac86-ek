@@ -4,16 +4,18 @@ function pad(n: number) {
   return String(n).padStart(2, "0");
 }
 
-function toICSDateUTC(dateStr: string, timeStr: string): string {
-  const d = new Date(`${dateStr}T${timeStr}`);
+function toICSLocal(dateStr: string, timeStr: string): string {
+  // Parse date and time components directly — no timezone conversion
+  const [year, month, day] = dateStr.split("-").map(Number);
+  const [hour, minute] = timeStr.split(":").map(Number);
   return (
-    d.getUTCFullYear().toString() +
-    pad(d.getUTCMonth() + 1) +
-    pad(d.getUTCDate()) +
+    year.toString() +
+    pad(month) +
+    pad(day) +
     "T" +
-    pad(d.getUTCHours()) +
-    pad(d.getUTCMinutes()) +
-    "00Z"
+    pad(hour) +
+    pad(minute) +
+    "00"
   );
 }
 
@@ -27,27 +29,34 @@ export function generateICS(events: EventRecord[]): string {
   ];
 
   for (const ev of events) {
-    const start = toICSDateUTC(ev.date, ev.time);
-    // Default duration: 2 hours
-    const endDate = new Date(`${ev.date}T${ev.time}`);
-    endDate.setHours(endDate.getHours() + 2);
+    const start = toICSLocal(ev.date, ev.time);
+    // Add 2 hours for end time
+    const [hour, minute] = ev.time.split(":").map(Number);
+    const endHour = hour + 2;
+    const [year, month, day] = ev.date.split("-").map(Number);
     const end =
-      endDate.getUTCFullYear().toString() +
-      pad(endDate.getUTCMonth() + 1) +
-      pad(endDate.getUTCDate()) +
+      year.toString() +
+      pad(month) +
+      pad(day) +
       "T" +
-      pad(endDate.getUTCHours()) +
-      pad(endDate.getUTCMinutes()) +
-      "00Z";
+      pad(endHour) +
+      pad(minute) +
+      "00";
+
+    const description = ev.description
+      .replace(/\\/g, "\\\\")
+      .replace(/;/g, "\\;")
+      .replace(/,/g, "\\,")
+      .replace(/\n/g, "\\n");
 
     lines.push(
       "BEGIN:VEVENT",
       `UID:${ev.id}@sportac86-ek`,
       `SUMMARY:${ev.title}`,
       `LOCATION:${ev.location}`,
-      `DESCRIPTION:${ev.description.replace(/\n/g, "\\n")}`,
-      `DTSTART:${start}`,
-      `DTEND:${end}`,
+      `DESCRIPTION:${description}`,
+      `DTSTART;TZID=Europe/Brussels:${start}`,
+      `DTEND;TZID=Europe/Brussels:${end}`,
       "END:VEVENT"
     );
   }

@@ -9,20 +9,40 @@ export async function POST(req: NextRequest) {
   const num_persons = parseInt(formData.get("num_persons") as string, 10);
   const remarks = formData.get("remarks") as string | null;
 
-  if (!event_id || !name || !email || isNaN(num_persons)) {
+  if (!event_id || !name || !email || isNaN(num_persons) || num_persons < 1 || num_persons > 10) {
     return NextResponse.redirect(new URL("/agenda?error=invalid", req.url));
   }
 
   const supabase = createServerClient();
 
-  // Fetch slug for redirect targets
+  // Validate event exists and is published
   const { data: eventData } = await supabase
     .from("events")
-    .select("slug")
+    .select("slug, max_attendees")
     .eq("id", event_id)
+    .eq("is_published", true)
     .single();
 
-  const eventPath = eventData?.slug ? `/agenda/${eventData.slug}` : "/agenda";
+  if (!eventData) {
+    return NextResponse.redirect(new URL("/agenda?error=invalid", req.url));
+  }
+
+  const eventPath = `/agenda/${eventData.slug}`;
+
+  // Check capacity if event has a limit
+  if (eventData.max_attendees !== null) {
+    const { data: regData } = await supabase
+      .from("registrations")
+      .select("num_persons")
+      .eq("event_id", event_id);
+
+    const totalRegistered = (regData ?? []).reduce((sum, r) => sum + (r.num_persons ?? 1), 0);
+    const spotsLeft = Math.max(0, eventData.max_attendees - totalRegistered);
+
+    if (num_persons > spotsLeft) {
+      return NextResponse.redirect(new URL(`${eventPath}?error=volzet`, req.url));
+    }
+  }
 
   const { error } = await supabase.from("registrations").insert({
     event_id,

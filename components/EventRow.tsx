@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { EventRecord } from "@/lib/types";
+import { formatPrice } from "@/lib/format";
 
 function formatDate(dateStr: string) {
   const d = new Date(dateStr);
@@ -9,14 +10,9 @@ function formatDate(dateStr: string) {
   };
 }
 
-function formatPrice(cents: number) {
-  if (cents === 0) return "Gratis";
-  return `€${(cents / 100).toFixed(2).replace(".", ",")}`;
-}
-
 export function EventRow({ event, past = false }: { event: EventRecord; past?: boolean }) {
   const { day, month } = formatDate(event.date);
-  const isPast = past || new Date(event.date) < new Date();
+  const isPast = past;
 
   return (
     <Link

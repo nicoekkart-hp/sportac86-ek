@@ -3,11 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createServerClient } from "@/lib/supabase";
 import { EventRecord } from "@/lib/types";
-
-function formatPrice(cents: number) {
-  if (cents === 0) return "Gratis";
-  return `€${(cents / 100).toFixed(2).replace(".", ",")}`;
-}
+import { formatPrice } from "@/lib/format";
 
 export default async function EventDetailPage({
   params,
