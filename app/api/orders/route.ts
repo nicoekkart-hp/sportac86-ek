@@ -9,7 +9,7 @@ export async function POST(req: NextRequest) {
   const phone = (formData.get("phone") as string) ?? "";
 
   if (!type || (type !== "candy" && type !== "wine") || !name || !email) {
-    return NextResponse.redirect(new URL("/steunen?error=invalid", req.url));
+    return NextResponse.redirect(new URL(`/steunen?error=invalid&sectie=${type === "candy" ? "snoep" : type === "wine" ? "wijn" : ""}`, req.url));
   }
 
   // Collect items: fields named "items.productId"
@@ -34,10 +34,10 @@ export async function POST(req: NextRequest) {
 
   if (error) {
     console.error("Order error:", error);
-    return NextResponse.redirect(new URL("/steunen?error=server", req.url));
+    return NextResponse.redirect(new URL(`/steunen?error=server&sectie=${type === "candy" ? "snoep" : "wijn"}`, req.url));
   }
 
   return NextResponse.redirect(
-    new URL(`/steunen?besteld=1#${type === "candy" ? "snoep" : "wijn"}`, req.url)
+    new URL(`/steunen?besteld=${type === "candy" ? "snoep" : "wijn"}`, req.url)
   );
 }

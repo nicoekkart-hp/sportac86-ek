@@ -1,6 +1,8 @@
 import Link from "next/link";
+import { Suspense } from "react";
 import { createServerClient } from "@/lib/supabase";
 import { Sponsor } from "@/lib/types";
+import { ScrollToSection } from "@/components/ScrollToSection";
 
 const levels = [
   { id: "gold", label: "Goud", description: "Logo prominent op homepage en alle pagina's" },
@@ -20,6 +22,9 @@ export default async function SponsorsPage() {
 
   return (
     <div className="pt-16">
+      <Suspense fallback={null}>
+        <ScrollToSection />
+      </Suspense>
       <div className="bg-gray-dark py-14 px-6 relative overflow-hidden">
         <div className="max-w-5xl mx-auto relative">
           <div className="text-sm text-gray-sub mb-4">

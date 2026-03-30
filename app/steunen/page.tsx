@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { Suspense } from "react";
+import { ScrollToSection } from "@/components/ScrollToSection";
 
 const CANDY_PRODUCTS = [
   { id: "mars", name: "Mars (doos 24 stuks)", price_cents: 1800 },
@@ -15,6 +17,9 @@ const WINE_PRODUCTS = [
 export default function SteunenPage() {
   return (
     <div className="pt-16">
+      <Suspense fallback={null}>
+        <ScrollToSection />
+      </Suspense>
       <div className="bg-gray-dark py-14 px-6 relative overflow-hidden">
         <div className="max-w-5xl mx-auto relative">
           <div className="text-sm text-gray-sub mb-4">

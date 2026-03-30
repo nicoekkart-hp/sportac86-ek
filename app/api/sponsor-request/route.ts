@@ -7,11 +7,11 @@ export async function POST(req: NextRequest) {
   const message = formData.get("message") as string;
 
   if (!name || !email) {
-    return NextResponse.redirect(new URL("/sponsors?error=invalid#aanvragen", req.url));
+    return NextResponse.redirect(new URL("/sponsors?error=invalid&sectie=aanvragen", req.url));
   }
 
   // TODO Phase 3: send email notification to admin via Resend
   console.log("Sponsor request:", { name, email, message });
 
-  return NextResponse.redirect(new URL("/sponsors?aangevraagd=1#aanvragen", req.url));
+  return NextResponse.redirect(new URL("/sponsors?aangevraagd=1&sectie=aanvragen", req.url));
 }

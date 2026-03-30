@@ -9,7 +9,7 @@ export async function POST(req: NextRequest) {
   const message = formData.get("message") as string | null;
 
   if (!name || !email || isNaN(amountEuros) || amountEuros <= 0 || amountEuros > 10000) {
-    return NextResponse.redirect(new URL("/steunen?error=invalid#doneer", req.url));
+    return NextResponse.redirect(new URL("/steunen?error=invalid&sectie=doneer", req.url));
   }
 
   const supabase = createServerClient();
@@ -22,8 +22,8 @@ export async function POST(req: NextRequest) {
 
   if (error) {
     console.error("Donation error:", error);
-    return NextResponse.redirect(new URL("/steunen?error=server#doneer", req.url));
+    return NextResponse.redirect(new URL("/steunen?error=server&sectie=doneer", req.url));
   }
 
-  return NextResponse.redirect(new URL("/steunen?bedankt=1#doneer", req.url));
+  return NextResponse.redirect(new URL("/steunen?bedankt=1&sectie=doneer", req.url));
 }
