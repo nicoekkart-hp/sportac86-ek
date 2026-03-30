@@ -9,16 +9,19 @@ import { TeamMember, Sponsor } from "@/lib/types";
 export default async function HomePage() {
   const supabase = createServerClient();
 
-  const { data: teamMembers } = await supabase
+  const { data: teamMembersData } = await supabase
     .from("team_members")
     .select("*")
     .order("sort_order")
     .limit(5);
 
-  const { data: sponsors } = await supabase
+  const { data: sponsorsData } = await supabase
     .from("sponsors")
     .select("*")
     .order("sort_order");
+
+  const teamMembers: TeamMember[] = teamMembersData ?? [];
+  const sponsors: Sponsor[] = sponsorsData ?? [];
 
   const ekDate = process.env.EK_DATE ?? "2025-08-01T09:00:00";
 
@@ -251,16 +254,11 @@ export default async function HomePage() {
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
-            {(teamMembers as TeamMember[] ?? []).map((member) => (
+            {teamMembers.map((member) => (
               <TeamCard key={member.id} member={member} />
             ))}
             <div className="bg-gray-warm border-2 border-dashed border-gray-300 rounded-sm flex items-center justify-center text-center p-6">
-              <div>
-                <div className="font-condensed font-black text-3xl text-gray-300">
-                  +8
-                </div>
-                <div className="text-xs text-gray-sub mt-1">meer atleten</div>
-              </div>
+              <div className="text-xs text-gray-sub">Meer atleten →</div>
             </div>
           </div>
 
@@ -313,7 +311,7 @@ export default async function HomePage() {
             <div className="flex-1 h-px bg-gray-200" />
           </div>
           <div className="flex gap-3 flex-wrap items-center">
-            {(sponsors as Sponsor[] ?? []).map((sponsor) => (
+            {sponsors.map((sponsor) => (
               sponsor.website_url ? (
                 <a
                   key={sponsor.id}
