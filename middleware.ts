@@ -13,8 +13,7 @@ export async function middleware(req: NextRequest) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
-  const accessToken = req.cookies.get("sb-access-token")?.value ??
-    req.cookies.getAll().find(c => c.name.includes("auth-token"))?.value;
+  const accessToken = req.cookies.get("sb-access-token")?.value;
 
   if (!accessToken) {
     return NextResponse.redirect(new URL("/admin/login", req.url));
