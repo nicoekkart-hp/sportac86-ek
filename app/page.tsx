@@ -59,73 +59,74 @@ export default async function HomePage() {
   return (
     <>
       {/* HERO */}
-      <section className="pt-16 md:grid md:grid-cols-2 md:min-h-screen relative overflow-hidden">
-        {/* Left: text */}
-        <div className="flex flex-col justify-center px-8 md:px-16 lg:px-24 py-20 bg-gray-warm relative z-10">
-          {/* Diagonal right edge on desktop */}
-          <div className="hidden md:block absolute top-0 right-0 bottom-0 w-16 bg-gray-warm [clip-path:polygon(0_0,0%_100%,100%_100%)] z-20" />
+      <div className="pt-16">
+        {/* Two-column split: text left, image right */}
+        <div className="flex flex-col-reverse md:grid md:grid-cols-2" style={{ minHeight: "calc(100vh - 64px - 64px)" }}>
+          {/* Left: text */}
+          <div className="flex flex-col justify-center px-8 md:px-16 lg:px-24 py-20 bg-gray-warm relative z-10">
+            {/* Diagonal right edge on desktop */}
+            <div className="hidden md:block absolute top-0 right-0 bottom-0 w-16 bg-gray-warm [clip-path:polygon(0_0,0%_100%,100%_100%)] z-20" />
 
-          <div className="flex items-center gap-2.5 mb-5">
-            <div className="w-8 h-0.5 bg-red-sportac flex-shrink-0" />
-            <span className="text-xs font-bold tracking-[0.2em] uppercase text-red-sportac">
-              Officieel gekwalificeerd · België 🇧🇪
-            </span>
+            <div className="flex items-center gap-2.5 mb-5">
+              <div className="w-8 h-0.5 bg-red-sportac flex-shrink-0" />
+              <span className="text-xs font-bold tracking-[0.2em] uppercase text-red-sportac">
+                Officieel gekwalificeerd · België 🇧🇪
+              </span>
+            </div>
+
+            <h1 className="font-condensed font-black italic text-[clamp(3.5rem,6vw,5.5rem)] leading-[.95] tracking-tight mb-7 text-gray-dark">
+              Sportac 86
+              <em className="not-italic text-red-sportac block">springt naar</em>
+              Europa
+            </h1>
+
+            <p className="text-[17px] text-gray-body max-w-md leading-relaxed mb-9">
+              Ons ropeskippingteam uit Deinze vertegenwoordigt België op het Europees
+              Kampioenschap in Noorwegen. Help ons de reis mogelijk maken.
+            </p>
+
+            <div className="flex items-center gap-5 flex-wrap">
+              <Link
+                href="/steunen"
+                className="bg-red-sportac text-white font-bold text-[15px] px-8 py-3.5 rounded-sm hover:bg-red-600 transition-colors"
+              >
+                Steun ons team
+              </Link>
+              <Link
+                href="/onze-reis"
+                className="text-[15px] font-semibold text-gray-dark border-b-2 border-gray-dark pb-0.5 hover:text-red-sportac hover:border-red-sportac transition-colors"
+              >
+                Onze reis →
+              </Link>
+            </div>
           </div>
 
-          <h1 className="font-condensed font-black italic text-[clamp(3.5rem,6vw,5.5rem)] leading-[.95] tracking-tight mb-7 text-gray-dark">
-            Sportac 86
-            <em className="not-italic text-red-sportac block">springt naar</em>
-            Europa
-          </h1>
-
-          <p className="text-[17px] text-gray-body max-w-md leading-relaxed mb-9">
-            Ons ropeskippingteam uit Deinze vertegenwoordigt België op het Europees
-            Kampioenschap in Noorwegen. Help ons de reis mogelijk maken.
-          </p>
-
-          <div className="flex items-center gap-5 flex-wrap">
-            <Link
-              href="/steunen"
-              className="bg-red-sportac text-white font-bold text-[15px] px-8 py-3.5 rounded-sm hover:bg-red-600 transition-colors"
-            >
-              Steun ons team
-            </Link>
-            <Link
-              href="/onze-reis"
-              className="text-[15px] font-semibold text-gray-dark border-b-2 border-gray-dark pb-0.5 hover:text-red-sportac hover:border-red-sportac transition-colors"
-            >
-              Onze reis →
-            </Link>
+          {/* Right: hero image */}
+          <div className="relative h-[60vw] md:h-auto bg-[#c8c0b8]">
+            {/* Replace src with real club action photo */}
+            <Image
+              src="https://images.unsplash.com/photo-1571902943202-507ec2618e8f?w=900&q=80&fit=crop&crop=top"
+              alt="Ropeskipping actie — te vervangen door clubfoto"
+              fill
+              className="object-cover object-top"
+              priority
+              sizes="(max-width: 768px) 100vw, 50vw"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+            <div className="absolute bottom-5 left-5 flex items-center gap-2.5">
+              <span className="text-xl">🇧🇪</span>
+              <div className="w-6 h-0.5 bg-red-sportac opacity-70" />
+              <span className="text-xl">🇳🇴</span>
+              <span className="text-white text-sm font-semibold tracking-wide">
+                Deinze · Noorwegen 2025
+              </span>
+            </div>
           </div>
         </div>
 
-        {/* Right: hero image */}
-        <div className="relative h-[60vw] md:h-auto md:self-stretch bg-[#c8c0b8] order-first md:order-last">
-          {/* Replace src with real club action photo */}
-          <Image
-            src="https://images.unsplash.com/photo-1571902943202-507ec2618e8f?w=900&q=80&fit=crop&crop=top"
-            alt="Ropeskipping actie — te vervangen door clubfoto"
-            fill
-            className="object-cover object-top"
-            priority
-            sizes="(max-width: 768px) 100vw, 50vw"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
-          <div className="absolute bottom-5 left-5 flex items-center gap-2.5">
-            <span className="text-xl">🇧🇪</span>
-            <div className="w-6 h-0.5 bg-red-sportac opacity-70" />
-            <span className="text-xl">🇳🇴</span>
-            <span className="text-white text-sm font-semibold tracking-wide">
-              Deinze · Noorwegen 2025
-            </span>
-          </div>
-        </div>
-
-        {/* Countdown bar — full width */}
-        <div className="col-span-full">
-          <Countdown targetDate={ekDate} />
-        </div>
-      </section>
+        {/* Countdown bar — full width below both columns */}
+        <Countdown targetDate={ekDate} />
+      </div>
 
       {/* EK INFO */}
       <section className="bg-white py-20 px-6">
