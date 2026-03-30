@@ -3,21 +3,30 @@ import { createServerClient } from "@/lib/supabase";
 
 export async function POST(req: NextRequest) {
   const formData = await req.formData();
-  const name = formData.get("name") as string;
-  const email = formData.get("email") as string;
-  const amountEuros = parseFloat(formData.get("amount_euros") as string);
-  const message = formData.get("message") as string | null;
+  const nameVal = formData.get("name");
+  const emailVal = formData.get("email");
+  const amountVal = formData.get("amount_euros");
+  const messageVal = formData.get("message");
 
-  if (!name || !email || isNaN(amountEuros) || amountEuros <= 0 || amountEuros > 10000) {
+  if (!nameVal || typeof nameVal !== "string" || !emailVal || typeof emailVal !== "string") {
     return NextResponse.redirect(new URL("/steunen?error=invalid&sectie=doneer", req.url));
   }
+
+  const amountEuros = parseInt(typeof amountVal === "string" ? amountVal : "", 10);
+  if (isNaN(amountEuros) || amountEuros <= 0 || amountEuros > 10000) {
+    return NextResponse.redirect(new URL("/steunen?error=invalid&sectie=doneer", req.url));
+  }
+
+  const name = nameVal;
+  const email = emailVal;
+  const message = messageVal && typeof messageVal === "string" ? messageVal : null;
 
   const supabase = createServerClient();
   const { error } = await supabase.from("donations").insert({
     name,
     email,
-    amount_cents: Math.round(amountEuros * 100),
-    message: message || null,
+    amount_cents: amountEuros * 100,
+    message,
   });
 
   if (error) {

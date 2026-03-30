@@ -99,8 +99,8 @@ export default function OnzeReisPage() {
           <div className="relative">
             <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-[#e8e4df]" />
             <div className="flex flex-col gap-8">
-              {timeline.map((item, i) => (
-                <div key={i} className="pl-12 relative">
+              {timeline.map((item) => (
+                <div key={item.title} className="pl-12 relative">
                   <div className="absolute left-0 top-1 w-8 h-8 rounded-full bg-red-sportac flex items-center justify-center">
                     <div className="w-2 h-2 rounded-full bg-white" />
                   </div>
@@ -124,7 +124,7 @@ export default function OnzeReisPage() {
             Doneer, schrijf je in voor een evenement, of bestel iets via onze acties. Elke bijdrage telt.
           </p>
           <Link
-            href="/steunen"
+            href="/steunen#doneer"
             className="inline-block bg-red-sportac text-white font-bold text-sm px-8 py-3 rounded-sm hover:bg-red-600 transition-colors"
           >
             Steun ons team

@@ -57,15 +57,15 @@ export default function SteunenPage() {
             <form action="/api/donations" method="POST" className="flex flex-col gap-4">
               <div>
                 <label className="block text-sm font-semibold mb-1">Naam</label>
-                <input type="text" name="name" className="w-full border border-[#e8e4df] rounded-sm px-3 py-2 text-sm focus:outline-none focus:border-red-sportac" placeholder="Jouw naam" />
+                <input type="text" name="name" required className="w-full border border-[#e8e4df] rounded-sm px-3 py-2 text-sm focus:outline-none focus:border-red-sportac" placeholder="Jouw naam" />
               </div>
               <div>
                 <label className="block text-sm font-semibold mb-1">E-mailadres</label>
-                <input type="email" name="email" className="w-full border border-[#e8e4df] rounded-sm px-3 py-2 text-sm focus:outline-none focus:border-red-sportac" placeholder="jouw@email.be" />
+                <input type="email" name="email" required className="w-full border border-[#e8e4df] rounded-sm px-3 py-2 text-sm focus:outline-none focus:border-red-sportac" placeholder="jouw@email.be" />
               </div>
               <div>
                 <label className="block text-sm font-semibold mb-1">Bedrag (€)</label>
-                <input type="number" name="amount_euros" min={1} step={1} className="w-full border border-[#e8e4df] rounded-sm px-3 py-2 text-sm focus:outline-none focus:border-red-sportac" placeholder="10" />
+                <input type="number" name="amount_euros" required min={1} step={1} className="w-full border border-[#e8e4df] rounded-sm px-3 py-2 text-sm focus:outline-none focus:border-red-sportac" placeholder="10" />
               </div>
               <div>
                 <label className="block text-sm font-semibold mb-1">Boodschap (optioneel)</label>

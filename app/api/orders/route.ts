@@ -1,23 +1,38 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase";
 
+const CANDY_IDS = ["mars", "snickers", "twix"];
+const WINE_IDS = ["rood", "wit", "rose"];
+
 export async function POST(req: NextRequest) {
   const formData = await req.formData();
-  const type = formData.get("type") as string;
-  const name = formData.get("name") as string;
-  const email = formData.get("email") as string;
-  const phone = (formData.get("phone") as string) ?? "";
+  const typeVal = formData.get("type");
+  const nameVal = formData.get("name");
+  const emailVal = formData.get("email");
+  const phoneVal = formData.get("phone");
 
-  if (!type || (type !== "candy" && type !== "wine") || !name || !email) {
-    return NextResponse.redirect(new URL(`/steunen?error=invalid&sectie=${type === "candy" ? "snoep" : type === "wine" ? "wijn" : ""}`, req.url));
+  if (
+    !typeVal || typeof typeVal !== "string" ||
+    (typeVal !== "candy" && typeVal !== "wine") ||
+    !nameVal || typeof nameVal !== "string" ||
+    !emailVal || typeof emailVal !== "string"
+  ) {
+    return NextResponse.redirect(new URL("/steunen?error=invalid", req.url));
   }
 
-  // Collect items: fields named "items.productId"
+  const type = typeVal as "candy" | "wine";
+  const name = nameVal;
+  const email = emailVal;
+  const phone = phoneVal && typeof phoneVal === "string" ? phoneVal : "";
+  const allowedIds = type === "candy" ? CANDY_IDS : WINE_IDS;
+
+  // Collect items: only allow known product IDs
   const items: Record<string, number> = {};
   for (const [key, value] of formData.entries()) {
     if (key.startsWith("items.")) {
-      const productId = key.replace("items.", "");
-      const qty = parseInt(value as string, 10);
+      const productId = key.slice("items.".length);
+      if (!allowedIds.includes(productId)) continue;
+      const qty = parseInt(typeof value === "string" ? value : "", 10);
       if (!isNaN(qty) && qty > 0) items[productId] = qty;
     }
   }
