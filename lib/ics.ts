@@ -4,16 +4,16 @@ function pad(n: number) {
   return String(n).padStart(2, "0");
 }
 
-function toICSDate(dateStr: string, timeStr: string): string {
+function toICSDateUTC(dateStr: string, timeStr: string): string {
   const d = new Date(`${dateStr}T${timeStr}`);
   return (
-    d.getFullYear().toString() +
-    pad(d.getMonth() + 1) +
-    pad(d.getDate()) +
+    d.getUTCFullYear().toString() +
+    pad(d.getUTCMonth() + 1) +
+    pad(d.getUTCDate()) +
     "T" +
-    pad(d.getHours()) +
-    pad(d.getMinutes()) +
-    "00"
+    pad(d.getUTCHours()) +
+    pad(d.getUTCMinutes()) +
+    "00Z"
   );
 }
 
@@ -27,18 +27,18 @@ export function generateICS(events: EventRecord[]): string {
   ];
 
   for (const ev of events) {
-    const start = toICSDate(ev.date, ev.time);
+    const start = toICSDateUTC(ev.date, ev.time);
     // Default duration: 2 hours
     const endDate = new Date(`${ev.date}T${ev.time}`);
     endDate.setHours(endDate.getHours() + 2);
     const end =
-      endDate.getFullYear().toString() +
-      pad(endDate.getMonth() + 1) +
-      pad(endDate.getDate()) +
+      endDate.getUTCFullYear().toString() +
+      pad(endDate.getUTCMonth() + 1) +
+      pad(endDate.getUTCDate()) +
       "T" +
-      pad(endDate.getHours()) +
-      pad(endDate.getMinutes()) +
-      "00";
+      pad(endDate.getUTCHours()) +
+      pad(endDate.getUTCMinutes()) +
+      "00Z";
 
     lines.push(
       "BEGIN:VEVENT",

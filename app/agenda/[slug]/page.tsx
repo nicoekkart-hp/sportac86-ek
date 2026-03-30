@@ -28,12 +28,12 @@ export default async function EventDetailPage({
   const ev = event as EventRecord;
   const isPast = new Date(ev.date) < new Date();
 
-  const { count } = await supabase
+  const { data: regData } = await supabase
     .from("registrations")
-    .select("num_persons", { count: "exact" })
+    .select("num_persons")
     .eq("event_id", ev.id);
 
-  const totalRegistered = count ?? 0;
+  const totalRegistered = (regData ?? []).reduce((sum, r) => sum + (r.num_persons ?? 1), 0);
   const spotsLeft = ev.max_attendees !== null
     ? Math.max(0, ev.max_attendees - totalRegistered)
     : null;
