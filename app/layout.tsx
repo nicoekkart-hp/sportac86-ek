@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import { Barlow, Barlow_Condensed } from "next/font/google";
 import "./globals.css";
-import { Nav } from "@/components/Nav";
-import { Footer } from "@/components/Footer";
+import { PublicShell } from "@/components/PublicShell";
 
 const barlow = Barlow({
   subsets: ["latin"],
@@ -39,9 +38,7 @@ export default function RootLayout({
       <body
         className={`${barlow.variable} ${barlowCondensed.variable} font-sans bg-gray-warm text-gray-dark antialiased`}
       >
-        <Nav />
-        <main>{children}</main>
-        <Footer />
+        <PublicShell>{children}</PublicShell>
       </body>
     </html>
   );
