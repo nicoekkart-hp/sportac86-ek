@@ -40,20 +40,20 @@ export function Countdown({ targetDate }: { targetDate: string }) {
   ];
 
   return (
-    <div className="bg-red-sportac flex items-stretch">
-      <div className="bg-black/20 px-6 py-3.5 text-white text-xs font-bold uppercase tracking-widest flex items-center whitespace-nowrap">
+    <div className="bg-red-sportac flex flex-col sm:flex-row items-stretch">
+      <div className="bg-black/20 px-6 py-2.5 sm:py-3.5 text-white text-xs font-bold uppercase tracking-widest flex items-center justify-center sm:justify-start whitespace-nowrap">
         Aftellen tot het EK
       </div>
       <div className="flex flex-1">
         {items.map((item) => (
           <div
             key={item.label}
-            className="flex-1 flex items-center justify-center gap-1.5 py-3.5 border-l border-white/20"
+            className="flex-1 flex items-center justify-center gap-1 sm:gap-1.5 py-3 sm:py-3.5 border-l border-white/20"
           >
-            <span className="font-condensed font-black text-2xl text-white leading-none">
+            <span className="font-condensed font-black text-xl sm:text-2xl text-white leading-none">
               {String(item.value).padStart(2, "0")}
             </span>
-            <span className="text-[10px] font-semibold text-white/70 self-end pb-0.5">
+            <span className="text-[9px] sm:text-[10px] font-semibold text-white/70 self-end pb-0.5">
               {item.label}
             </span>
           </div>
