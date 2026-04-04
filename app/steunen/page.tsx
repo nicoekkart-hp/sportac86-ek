@@ -31,7 +31,9 @@ export default function SteunenPage() {
             Steun <em className="not-italic text-red-sportac">Sportac 86</em>
           </h1>
           <p className="text-gray-sub text-[15px] max-w-lg leading-relaxed">
-            Elke euro helpt ons dichter bij Noorwegen. Kies hoe je wil bijdragen.
+            De reis, het verblijf en de deelname voor onze delegatie van 9 personen kosten
+            ongeveer <strong className="text-white">€ 15.000</strong>. Elke euro helpt ons
+            dichter bij Noorwegen. Kies hoe je wil bijdragen.
           </p>
         </div>
       </div>
@@ -50,9 +52,9 @@ export default function SteunenPage() {
               Stort een vrij bedrag op onze rekening of laat hier je gegevens achter zodat we je kunnen bedanken.
             </p>
             <div className="bg-gray-warm rounded-sm p-4 mb-6 font-mono text-sm">
-              <p><strong>BE00 0000 0000 0000</strong></p>
+              <p><strong>BE89 0689 4858 8285</strong></p>
               <p className="text-gray-sub">Sportac 86 Deinze</p>
-              <p className="text-gray-sub">Mededeling: EK Ropeskipping 2025</p>
+              <p className="text-gray-sub">Mededeling: EK Ropeskipping Noorwegen 2026</p>
             </div>
             <form action="/api/donations" method="POST" className="flex flex-col gap-4">
               <div>

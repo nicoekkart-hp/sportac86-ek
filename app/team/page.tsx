@@ -1,5 +1,5 @@
 import { createServerClient } from "@/lib/supabase";
-import { TeamCard } from "@/components/TeamCard";
+import { TeamGrid } from "@/components/TeamGrid";
 import { TeamMember } from "@/lib/types";
 import Link from "next/link";
 
@@ -11,8 +11,8 @@ export default async function TeamPage() {
     .order("sort_order");
 
   const members: TeamMember[] = data ?? [];
-  const atleten = members.filter((m) => m.role === "Atleet");
-  const staf = members.filter((m) => m.role !== "Atleet");
+  const atleten = members.filter((m) => m.role === "Skipper");
+  const staf = members.filter((m) => m.role !== "Skipper");
 
   return (
     <div className="pt-16">
@@ -30,7 +30,7 @@ export default async function TeamPage() {
             Het <em className="not-italic text-red-sportac">team</em>
           </h1>
           <p className="text-gray-sub text-[15px] max-w-lg leading-relaxed">
-            Maak kennis met de atleten, coaches en begeleiders die deze droom waarmaken.
+            Maak kennis met de skippers, coaches en begeleiders die deze droom waarmaken.
           </p>
         </div>
       </div>
@@ -40,11 +40,11 @@ export default async function TeamPage() {
           <>
             <div className="flex items-center gap-2 mb-2">
               <div className="w-5 h-0.5 bg-red-sportac" />
-              <span className="text-xs font-bold tracking-[0.2em] uppercase text-red-sportac">Atleten</span>
+              <span className="text-xs font-bold tracking-[0.2em] uppercase text-red-sportac">Skippers</span>
             </div>
-            <h2 className="font-condensed font-black italic text-4xl text-gray-dark mb-8">De springers</h2>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 mb-14">
-              {atleten.map((m) => <TeamCard key={m.id} member={m} />)}
+            <h2 className="font-condensed font-black italic text-4xl text-gray-dark mb-8">De skippers</h2>
+            <div className="mb-14">
+              <TeamGrid members={atleten} />
             </div>
           </>
         )}
@@ -56,9 +56,7 @@ export default async function TeamPage() {
               <span className="text-xs font-bold tracking-[0.2em] uppercase text-red-sportac">Staf</span>
             </div>
             <h2 className="font-condensed font-black italic text-4xl text-gray-dark mb-8">Coaches & begeleiding</h2>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
-              {staf.map((m) => <TeamCard key={m.id} member={m} />)}
-            </div>
+            <TeamGrid members={staf} />
           </>
         )}
       </div>

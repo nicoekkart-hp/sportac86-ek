@@ -84,8 +84,15 @@ export default async function SponsorsPage() {
           <h2 className="font-condensed font-black italic text-4xl text-white mb-4">
             Steun Sportac 86 als sponsor
           </h2>
+          <p className="text-gray-sub text-sm leading-relaxed mb-3 max-w-lg">
+            Als sponsor van Sportac 86 ondersteun je een team van getalenteerde jongeren op weg naar het Europees Kampioenschap in Melsomvik, Noorwegen (10–14 augustus 2026). De totale kosten voor de delegatie van 9 personen worden geschat op <strong className="text-white">€ 15.000</strong> — elke bijdrage telt.
+          </p>
           <p className="text-gray-sub text-sm leading-relaxed mb-8 max-w-lg">
-            Als sponsor van Sportac 86 ondersteun je een team van getalenteerde jongeren op weg naar het Europees Kampioenschap. We bieden verschillende sponsorpakketten aan.
+            Stuur een mail naar{" "}
+            <a href="mailto:sportacwkropeskipping@gmail.com" className="text-red-sportac hover:underline">
+              sportacwkropeskipping@gmail.com
+            </a>{" "}
+            met je gekozen pakket en het logo van je bedrijf, of gebruik het formulier hieronder.
           </p>
 
           {/* Packages */}

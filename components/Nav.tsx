@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import clsx from "clsx";
@@ -21,15 +22,20 @@ export function Nav() {
       <div className="max-w-6xl mx-auto px-6 flex items-center justify-between h-16">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-3">
-          <span className="font-condensed font-black text-2xl text-red-sportac leading-none">
-            S86
-          </span>
+          <Image
+            src="https://sportac86.be/swfiles/logo/logo.png?nocache=1775235881"
+            alt="Sportac 86 Deinze"
+            width={80}
+            height={80}
+            className="object-contain"
+            style={{ width: 80, height: "auto" }}
+          />
           <div className="leading-tight">
             <span className="block font-condensed font-bold text-sm text-gray-dark">
               Sportac 86 Deinze
             </span>
             <span className="block text-[11px] text-gray-sub">
-              EK Ropeskipping · Noorwegen 2025
+              EK Ropeskipping · Noorwegen 2026
             </span>
           </div>
         </Link>

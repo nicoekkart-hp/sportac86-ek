@@ -1,8 +1,9 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Countdown } from "@/components/Countdown";
-import { TeamCard } from "@/components/TeamCard";
+import { TeamGrid } from "@/components/TeamGrid";
 import { SupportTile } from "@/components/SupportTile";
+import { PhotoGallery } from "@/components/PhotoGallery";
 import { createServerClient } from "@/lib/supabase";
 import { TeamMember, Sponsor } from "@/lib/types";
 
@@ -23,7 +24,7 @@ export default async function HomePage() {
   const teamMembers: TeamMember[] = teamMembersData ?? [];
   const sponsors: Sponsor[] = sponsorsData ?? [];
 
-  const ekDate = process.env.EK_DATE ?? "2025-08-01T09:00:00";
+  const ekDate = process.env.EK_DATE ?? "2026-08-10T00:00:00+02:00";
 
   const supportTiles = [
     {
@@ -67,22 +68,20 @@ export default async function HomePage() {
             {/* Diagonal right edge on desktop */}
             <div className="hidden md:block absolute top-0 right-0 bottom-0 w-16 bg-gray-warm [clip-path:polygon(0_0,0%_100%,100%_100%)] z-20" />
 
-            <div className="flex items-center gap-2.5 mb-5">
-              <div className="w-8 h-0.5 bg-red-sportac flex-shrink-0" />
-              <span className="text-xs font-bold tracking-[0.2em] uppercase text-red-sportac">
-                Officieel gekwalificeerd · België 🇧🇪
-              </span>
-            </div>
-
             <h1 className="font-condensed font-black italic text-[clamp(3.5rem,6vw,5.5rem)] leading-[.95] tracking-tight mb-7 text-gray-dark">
               Sportac 86
               <em className="not-italic text-red-sportac block">springt naar</em>
-              Europa
+              Noorwegen
             </h1>
 
             <p className="text-[17px] text-gray-body max-w-md leading-relaxed mb-9">
-              Ons ropeskippingteam uit Deinze vertegenwoordigt België op het Europees
-              Kampioenschap in Noorwegen. Help ons de reis mogelijk maken.
+              De beloften ropeskippers van SPORTAC86 hebben eind maart een geweldige
+              prestatie geleverd op het Vlaams Kampioenschap en plaatsten zich met maar
+              liefst 7 skippers voor het Europees Kampioenschap in Melsomvik, Noorwegen!
+              Dit evenement zal plaatsvinden van 10 tot en met 14 augustus 2026.<br></br>
+            </p>
+            <p className="text-[17px] text-gray-body max-w-md leading-relaxed mb-9">
+              Om deze droom te kunnen financieren organiseren de skippers verschillende acties, waar we jou hulp voor nodig hebben!
             </p>
 
             <div className="flex items-center gap-5 flex-wrap">
@@ -103,10 +102,9 @@ export default async function HomePage() {
 
           {/* Right: hero image */}
           <div className="relative h-[60vw] md:h-auto bg-[#c8c0b8]">
-            {/* Replace src with real club action photo */}
             <Image
-              src="https://images.unsplash.com/photo-1571902943202-507ec2618e8f?w=900&q=80&fit=crop&crop=top"
-              alt="Ropeskipping actie — te vervangen door clubfoto"
+              src="/groepsfotos/IMG_6017.jpeg"
+              alt="Sportac 86 Deinze — groepsfoto"
               fill
               className="object-cover object-top"
               priority
@@ -118,7 +116,7 @@ export default async function HomePage() {
               <div className="w-6 h-0.5 bg-red-sportac opacity-70" />
               <span className="text-xl">🇳🇴</span>
               <span className="text-white text-sm font-semibold tracking-wide">
-                Deinze · Noorwegen 2025
+                Deinze · Noorwegen 2026
               </span>
             </div>
           </div>
@@ -143,29 +141,29 @@ export default async function HomePage() {
               Wat is het EK Ropeskipping?
             </h2>
             <p className="text-gray-body text-[15px] leading-relaxed mb-4">
-              Het Europees Kampioenschap Ropeskipping is de grootste ropeskippingcompetitie
-              op ons continent. Atleten uit heel Europa meten er hun kracht, snelheid en
-              choreografie in disciplines als speed, freestyle en teamspringen.
+              Het EK Ropeskipping is de grootste ropeskippingcompetitie op Europees niveau.
+              In augustus 2026 komen de beste teams uit heel Europa samen in Melsomvik,
+              Noorwegen voor de disciplines Freestyle en Speed.
             </p>
             <p className="text-gray-body text-[15px] leading-relaxed mb-8">
-              Sportac 86 Deinze behaalde de nodige scores op de Belgische kampioenschappen
-              en verdient een startbewijs. Wij zijn één van de weinige Belgische clubs op
-              dit niveau.
+              De beloften van SPORTAC86 plaatsten zich begin 2026 via het Vlaams
+              Kampioenschap voor dit evenement — met maar liefst 7 gekwalificeerde skippers
+              een uitzonderlijke prestatie voor een club uit Deinze.
             </p>
 
-            {/* Stats */}
+            {/* Key details */}
             <div className="border-t border-gray-200">
               {[
-                { num: "2025", label: "Europees Kampioenschap", sub: "Noorwegen · Zomer 2025" },
-                { num: "30+", label: "Deelnemende landen", sub: "Teams uit heel Europa" },
-                { num: "3", label: "Disciplines", sub: "Speed · Freestyle · Team" },
+                { icon: "📍", label: "Locatie", sub: "Melsomvik, Noorwegen" },
+                { icon: "📅", label: "Datum", sub: "10–14 augustus 2026" },
+                { icon: "🏅", label: "Gekwalificeerde skippers", sub: "7 skippers van SPORTAC86" },
               ].map((fact) => (
                 <div
-                  key={fact.num}
+                  key={fact.label}
                   className="flex gap-5 items-center py-4 border-b border-gray-200"
                 >
-                  <div className="font-condensed font-black italic text-[34px] text-red-sportac leading-none min-w-[60px]">
-                    {fact.num}
+                  <div className="text-[28px] min-w-[48px] text-center leading-none">
+                    {fact.icon}
                   </div>
                   <div>
                     <div className="font-bold text-[15px] text-gray-dark">{fact.label}</div>
@@ -195,38 +193,17 @@ export default async function HomePage() {
             </div>
           </div>
 
-          {/* Right: photo collage */}
-          <div className="grid grid-cols-2 gap-2" style={{ gridTemplateRows: "220px 160px" }}>
-            {/* Large image — replace with real competition photo */}
-            <div className="row-span-2 relative rounded-sm overflow-hidden bg-[#ddd8d0]">
-              <Image
-                src="https://images.unsplash.com/photo-1576941089067-2de3c901e126?w=600&q=80&fit=crop"
-                alt="Ropeskipping competitie — vervang door clubfoto"
-                fill
-                className="object-cover"
-                sizes="25vw"
-              />
-            </div>
-            {/* Top right — team photo */}
-            <div className="relative rounded-sm overflow-hidden bg-[#ddd8d0]">
-              <Image
-                src="https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=400&q=80&fit=crop"
-                alt="Team Sportac 86 — vervang door clubfoto"
-                fill
-                className="object-cover"
-                sizes="20vw"
-              />
-            </div>
-            {/* Bottom right — training */}
-            <div className="relative rounded-sm overflow-hidden bg-[#ddd8d0]">
-              <Image
-                src="https://images.unsplash.com/photo-1517649763962-0c623066013b?w=400&q=80&fit=crop"
-                alt="Training — vervang door clubfoto"
-                fill
-                className="object-cover"
-                sizes="20vw"
-              />
-            </div>
+          {/* Right: photo gallery */}
+          <div>
+            <PhotoGallery
+              initialVisible={3}
+              photos={[
+                { src: "/groepsfotos/IMG_6011.jpeg", alt: "Sportac 86 Deinze — groepsfoto" },
+                { src: "/groepsfotos/IMG_6015.jpeg", alt: "Sportac 86 Deinze — groepsfoto" },
+                { src: "/groepsfotos/IMG_6016.jpeg", alt: "Sportac 86 Deinze — groepsfoto" },
+                { src: "/groepsfotos/IMG_6017.jpeg", alt: "Sportac 86 Deinze — groepsfoto" },
+              ]}
+            />
           </div>
         </div>
       </section>
@@ -239,7 +216,7 @@ export default async function HomePage() {
               <div className="flex items-center gap-2 mb-2">
                 <div className="w-5 h-0.5 bg-red-sportac" />
                 <span className="text-xs font-bold tracking-[0.2em] uppercase text-red-sportac">
-                  Onze atleten
+                  Onze skippers
                 </span>
               </div>
               <h2 className="font-condensed font-black italic text-5xl leading-none text-gray-dark">
@@ -254,14 +231,7 @@ export default async function HomePage() {
             </Link>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
-            {teamMembers.map((member) => (
-              <TeamCard key={member.id} member={member} />
-            ))}
-            <div className="bg-gray-warm border-2 border-dashed border-gray-300 rounded-sm flex items-center justify-center text-center p-6">
-              <div className="text-xs text-gray-sub">Meer atleten →</div>
-            </div>
-          </div>
+          <TeamGrid members={teamMembers} />
 
           <Link
             href="/team"
@@ -289,7 +259,7 @@ export default async function HomePage() {
               </h2>
             </div>
             <p className="text-gray-sub text-sm max-w-[280px] sm:text-right leading-relaxed">
-              Elke euro helpt ons dichter bij Noorwegen. Kies hoe je wil bijdragen.
+              We zamelen <strong className="text-white">€ 15.000</strong> in voor de reis van 9 personen naar Noorwegen. Kies hoe je wil bijdragen.
             </p>
           </div>
 

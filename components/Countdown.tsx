@@ -21,21 +21,22 @@ function getTimeLeft(target: Date): TimeLeft {
 }
 
 export function Countdown({ targetDate }: { targetDate: string }) {
-  const target = new Date(targetDate);
-  const [timeLeft, setTimeLeft] = useState<TimeLeft>(getTimeLeft(target));
+  const [timeLeft, setTimeLeft] = useState<TimeLeft | null>(null);
 
   useEffect(() => {
+    const target = new Date(targetDate);
+    setTimeLeft(getTimeLeft(target));
     const interval = setInterval(() => {
       setTimeLeft(getTimeLeft(target));
     }, 1000);
     return () => clearInterval(interval);
-  }, [target]);
+  }, [targetDate]);
 
   const items = [
-    { value: timeLeft.dagen, label: "dagen" },
-    { value: timeLeft.uur, label: "uur" },
-    { value: timeLeft.min, label: "min" },
-    { value: timeLeft.sec, label: "sec" },
+    { value: timeLeft?.dagen ?? 0, label: "dagen" },
+    { value: timeLeft?.uur ?? 0, label: "uur" },
+    { value: timeLeft?.min ?? 0, label: "min" },
+    { value: timeLeft?.sec ?? 0, label: "sec" },
   ];
 
   return (

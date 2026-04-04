@@ -1,23 +1,24 @@
 import Link from "next/link";
+import Image from "next/image";
 
 const timeline = [
   {
-    date: "September 2024",
+    date: "September 2025",
     title: "Seizoensstart",
     body: "Het team start met intensieve trainingen om de kwalificatienormen te halen.",
   },
   {
-    date: "December 2024",
+    date: "December 2025",
     title: "Belgische Kampioenschappen",
     body: "Sportac 86 schittert op de Belgische Kampioenschappen en haalt de vereiste scores.",
   },
   {
-    date: "Januari 2025",
+    date: "Januari 2026",
     title: "Kwalificatie bevestigd!",
     body: "Officieel: Sportac 86 Deinze is gekwalificeerd voor het EK Ropeskipping in Noorwegen.",
   },
   {
-    date: "Zomer 2025",
+    date: "Zomer 2026",
     title: "Europees Kampioenschap Noorwegen",
     body: "Het team treedt aan namens België op het EK. Dromen worden werkelijkheid.",
   },
@@ -54,7 +55,7 @@ export default function OnzeReisPage() {
           </h2>
           <p className="text-gray-body text-[15px] leading-relaxed mb-4">
             Sportac 86 Deinze is een club met een rijke traditie in ropeskipping. Al jaren
-            trainen onze atleten hard om zich op het hoogste niveau te meten. Dit seizoen
+            trainen onze skippers hard om zich op het hoogste niveau te meten. Dit seizoen
             hebben we iets uitzonderlijks bereikt: een kwalificatie voor het Europees
             Kampioenschap Ropeskipping in Noorwegen.
           </p>
@@ -70,12 +71,23 @@ export default function OnzeReisPage() {
           </p>
         </div>
 
+        {/* Team photo */}
+        <div className="relative w-full h-72 rounded-sm overflow-hidden mb-14">
+          <Image
+            src="/groepsfotos/IMG_6015.jpeg"
+            alt="Sportac 86 Deinze — het team"
+            fill
+            className="object-cover object-center"
+            sizes="(max-width: 768px) 100vw, 768px"
+          />
+        </div>
+
         {/* EK facts */}
         <div className="bg-white border border-[#e8e4df] rounded-sm p-8 mb-14">
           <h3 className="font-bold text-lg mb-5">Het EK in cijfers</h3>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 text-center">
             {[
-              { num: "2025", label: "Jaar" },
+              { num: "2026", label: "Jaar" },
               { num: "30+", label: "Landen" },
               { num: "3", label: "Disciplines" },
               { num: "🇳🇴", label: "Noorwegen" },

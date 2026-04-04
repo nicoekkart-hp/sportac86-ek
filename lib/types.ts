@@ -47,9 +47,14 @@ export type Order = {
 export type TeamMember = {
   id: string;
   name: string;
-  role: string;           // "Atleet" | "Coach" | "Begeleider"
-  discipline: string | null; // "Freestyle" | "Speed" | "Team"
-  bio: string | null;
+  role: string;           // "Skipper" | "Coach" | "Begeleider"
+  discipline: string[] | null; // ["Freestyle"] | ["Speed"] | ["Freestyle", "Speed"] | null
+  bio: {
+    age?: string;
+    why?: string;
+    favorite_discipline?: string;
+    years?: string;
+  } | null;
   image_url: string | null;
   sort_order: number;
   created_at: string;

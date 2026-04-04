@@ -17,11 +17,11 @@ const barlowCondensed = Barlow_Condensed({
 });
 
 export const metadata: Metadata = {
-  title: "Sportac 86 Deinze — EK Ropeskipping Noorwegen 2025",
+  title: "Sportac 86 Deinze — EK Ropeskipping Noorwegen 2026",
   description:
     "Sportac 86 Deinze vertegenwoordigt België op het Europees Kampioenschap Ropeskipping in Noorwegen. Steun ons team!",
   openGraph: {
-    title: "Sportac 86 Deinze — EK Ropeskipping Noorwegen 2025",
+    title: "Sportac 86 Deinze — EK Ropeskipping Noorwegen 2026",
     description: "Steun ons ropeskippingteam op weg naar Noorwegen!",
     locale: "nl_BE",
     type: "website",
