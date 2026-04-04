@@ -5,22 +5,23 @@ import { Product } from "@/lib/types";
 
 export async function POST(req: NextRequest) {
   const formData = await req.formData();
-  const type = formData.get("type") as string;
+  const sale_id = (formData.get("sale_id") as string)?.trim();
+  const sale_slug = (formData.get("sale_slug") as string)?.trim();
   const name = (formData.get("name") as string)?.trim();
   const email = (formData.get("email") as string)?.trim();
   const phone = (formData.get("phone") as string)?.trim() ?? "";
 
-  if (!name || !email || (type !== "candy" && type !== "wine")) {
+  if (!sale_id || !sale_slug || !name || !email) {
     return NextResponse.json({ error: "Ongeldige invoer" }, { status: 400 });
   }
 
   const supabase = createAdminClient();
 
-  // Fetch active products of this type
+  // Fetch active products of this sale
   const { data: products } = await supabase
     .from("products")
     .select("*")
-    .eq("type", type)
+    .eq("sale_id", sale_id)
     .eq("is_active", true);
 
   const productMap = new Map((products ?? []).map((p: Product) => [p.id, p]));
@@ -37,16 +38,15 @@ export async function POST(req: NextRequest) {
   }
 
   const origin = req.headers.get("origin") ?? "http://localhost:3000";
-  const sectionType = type === "candy" ? "snoep" : "wijn";
 
   if (Object.keys(items).length === 0) {
-    return NextResponse.redirect(new URL(`/steunen#${sectionType}`, req.url));
+    return NextResponse.redirect(new URL(`/steunen#${sale_slug}`, req.url));
   }
 
   // Write pending order
   const { data: order, error: dbError } = await supabase
     .from("orders")
-    .insert({ type, name, email, phone, items, status: "new", payment_status: "pending" })
+    .insert({ sale_id, name, email, phone, items, status: "new", payment_status: "pending" })
     .select("id")
     .single();
 
@@ -72,8 +72,8 @@ export async function POST(req: NextRequest) {
     mode: "payment",
     customer_email: email,
     metadata: { type: "bestelling", record_id: order.id },
-    success_url: `${origin}/steunen?betaald=${sectionType}`,
-    cancel_url: `${origin}/steunen#${sectionType}`,
+    success_url: `${origin}/steunen?betaald=${sale_slug}`,
+    cancel_url: `${origin}/steunen#${sale_slug}`,
   });
 
   return NextResponse.redirect(session.url!, 303);

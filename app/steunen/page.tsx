@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { ScrollToSection } from "@/components/ScrollToSection";
 import { createAdminClient } from "@/lib/supabase-admin";
-import { Product } from "@/lib/types";
+import { Product, Sale } from "@/lib/types";
 import { DonatieForm } from "./_DonatieForm";
 
 export default async function SteunenPage({
@@ -12,14 +12,28 @@ export default async function SteunenPage({
 }) {
   const { betaald } = await searchParams;
   const supabase = createAdminClient();
+
+  const { data: salesData } = await supabase
+    .from("sales")
+    .select("*")
+    .eq("is_active", true)
+    .order("sort_order");
+
+  const sales: Sale[] = salesData ?? [];
+
+  // Fetch all active products in one query
   const { data: productsData } = await supabase
     .from("products")
     .select("*")
     .eq("is_active", true)
     .order("sort_order");
 
-  const candyProducts = (productsData ?? []).filter((p: Product) => p.type === "candy");
-  const wineProducts = (productsData ?? []).filter((p: Product) => p.type === "wine");
+  const productsBySale = new Map<string, Product[]>();
+  for (const p of (productsData ?? []) as Product[]) {
+    const list = productsBySale.get(p.sale_id) ?? [];
+    list.push(p);
+    productsBySale.set(p.sale_id, list);
+  }
 
   return (
     <div className="pt-16">
@@ -29,9 +43,9 @@ export default async function SteunenPage({
 
       {betaald && (
         <div className="bg-green-50 border-b border-green-200 px-6 py-3 text-center text-sm font-semibold text-green-800">
-          {betaald === "donatie" && "Bedankt voor je donatie! Je ontvangt een bevestiging per e-mail."}
-          {betaald === "snoep" && "Bestelling ontvangen! Je ontvangt een bevestiging per e-mail."}
-          {betaald === "wijn" && "Bestelling ontvangen! Je ontvangt een bevestiging per e-mail."}
+          {betaald === "donatie"
+            ? "Bedankt voor je donatie! Je ontvangt een bevestiging per e-mail."
+            : "Bestelling ontvangen! Je ontvangt een bevestiging per e-mail."}
         </div>
       )}
 
@@ -76,89 +90,62 @@ export default async function SteunenPage({
           </div>
         </section>
 
-        {/* Candy */}
-        <section id="snoep">
-          <div className="flex items-center gap-2 mb-3">
-            <div className="w-5 h-0.5 bg-red-sportac" />
-            <span className="text-xs font-bold tracking-[0.2em] uppercase text-red-sportac">Snoep</span>
-          </div>
-          <h2 className="font-condensed font-black italic text-4xl text-gray-dark mb-5">Snoep bestellen</h2>
-          <div className="bg-white border border-[#e8e4df] rounded-sm p-8 max-w-lg">
-            <p className="text-gray-body text-sm leading-relaxed mb-6">
-              Bestel een doos snoep via onze actie. Afhalen op een van de afhaaldata (zie <Link href="/agenda" className="text-red-sportac underline">agenda</Link>).
-            </p>
-            <form action="/api/checkout/bestelling" method="POST" className="flex flex-col gap-4">
-              <input type="hidden" name="type" value="candy" />
-              {candyProducts.map((p: Product) => (
-                <div key={p.id} className="flex items-center justify-between">
-                  <label className="text-sm font-semibold">{p.name}</label>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-gray-sub">€{(p.price_cents / 100).toFixed(2)}</span>
-                    <input type="number" name={`items.${p.id}`} min={0} defaultValue={0} className="w-16 border border-[#e8e4df] rounded-sm px-2 py-1 text-sm text-center focus:outline-none focus:border-red-sportac" />
+        {/* Dynamic sale sections */}
+        {sales.map((sale) => {
+          const products = productsBySale.get(sale.id) ?? [];
+          return (
+            <section key={sale.id} id={sale.slug}>
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-5 h-0.5 bg-red-sportac" />
+                <span className="text-xs font-bold tracking-[0.2em] uppercase text-red-sportac">{sale.name}</span>
+              </div>
+              <h2 className="font-condensed font-black italic text-4xl text-gray-dark mb-5">{sale.name} bestellen</h2>
+              <div className="bg-white border border-[#e8e4df] rounded-sm p-8 max-w-lg">
+                {sale.description && (
+                  <p className="text-gray-body text-sm leading-relaxed mb-6">{sale.description}</p>
+                )}
+                <form action="/api/checkout/bestelling" method="POST" className="flex flex-col gap-4">
+                  <input type="hidden" name="sale_id" value={sale.id} />
+                  <input type="hidden" name="sale_slug" value={sale.slug} />
+                  {products.map((p: Product) => (
+                    <div key={p.id} className="flex items-center justify-between">
+                      <label className="text-sm font-semibold">{p.name}</label>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-gray-sub">€{(p.price_cents / 100).toFixed(2)}</span>
+                        <input
+                          type="number"
+                          name={`items.${p.id}`}
+                          min={0}
+                          defaultValue={0}
+                          className="w-16 border border-[#e8e4df] rounded-sm px-2 py-1 text-sm text-center focus:outline-none focus:border-red-sportac"
+                        />
+                      </div>
+                    </div>
+                  ))}
+                  {products.length === 0 && (
+                    <p className="text-sm text-gray-sub">Geen producten beschikbaar.</p>
+                  )}
+                  <hr className="border-[#e8e4df]" />
+                  <div>
+                    <label className="block text-sm font-semibold mb-1">Naam *</label>
+                    <input type="text" name="name" required className="w-full border border-[#e8e4df] rounded-sm px-3 py-2 text-sm focus:outline-none focus:border-red-sportac" />
                   </div>
-                </div>
-              ))}
-              <hr className="border-[#e8e4df]" />
-              <div>
-                <label className="block text-sm font-semibold mb-1">Naam *</label>
-                <input type="text" name="name" required className="w-full border border-[#e8e4df] rounded-sm px-3 py-2 text-sm focus:outline-none focus:border-red-sportac" />
-              </div>
-              <div>
-                <label className="block text-sm font-semibold mb-1">E-mailadres *</label>
-                <input type="email" name="email" required className="w-full border border-[#e8e4df] rounded-sm px-3 py-2 text-sm focus:outline-none focus:border-red-sportac" />
-              </div>
-              <div>
-                <label className="block text-sm font-semibold mb-1">Telefoonnummer</label>
-                <input type="tel" name="phone" className="w-full border border-[#e8e4df] rounded-sm px-3 py-2 text-sm focus:outline-none focus:border-red-sportac" />
-              </div>
-              <button type="submit" className="bg-red-sportac text-white font-bold py-3 rounded-sm hover:bg-red-600 transition-colors text-sm">
-                Bestelling plaatsen &amp; betalen
-              </button>
-            </form>
-          </div>
-        </section>
-
-        {/* Wine */}
-        <section id="wijn">
-          <div className="flex items-center gap-2 mb-3">
-            <div className="w-5 h-0.5 bg-red-sportac" />
-            <span className="text-xs font-bold tracking-[0.2em] uppercase text-red-sportac">Wijn</span>
-          </div>
-          <h2 className="font-condensed font-black italic text-4xl text-gray-dark mb-5">Wijn bestellen</h2>
-          <div className="bg-white border border-[#e8e4df] rounded-sm p-8 max-w-lg">
-            <p className="text-gray-body text-sm leading-relaxed mb-6">
-              Kies uit onze selectie wijnen. Afhalen op een van de afhaaldata (zie <Link href="/agenda" className="text-red-sportac underline">agenda</Link>).
-            </p>
-            <form action="/api/checkout/bestelling" method="POST" className="flex flex-col gap-4">
-              <input type="hidden" name="type" value="wine" />
-              {wineProducts.map((p: Product) => (
-                <div key={p.id} className="flex items-center justify-between">
-                  <label className="text-sm font-semibold">{p.name}</label>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-gray-sub">€{(p.price_cents / 100).toFixed(2)}</span>
-                    <input type="number" name={`items.${p.id}`} min={0} defaultValue={0} className="w-16 border border-[#e8e4df] rounded-sm px-2 py-1 text-sm text-center focus:outline-none focus:border-red-sportac" />
+                  <div>
+                    <label className="block text-sm font-semibold mb-1">E-mailadres *</label>
+                    <input type="email" name="email" required className="w-full border border-[#e8e4df] rounded-sm px-3 py-2 text-sm focus:outline-none focus:border-red-sportac" />
                   </div>
-                </div>
-              ))}
-              <hr className="border-[#e8e4df]" />
-              <div>
-                <label className="block text-sm font-semibold mb-1">Naam *</label>
-                <input type="text" name="name" required className="w-full border border-[#e8e4df] rounded-sm px-3 py-2 text-sm focus:outline-none focus:border-red-sportac" />
+                  <div>
+                    <label className="block text-sm font-semibold mb-1">Telefoonnummer</label>
+                    <input type="tel" name="phone" className="w-full border border-[#e8e4df] rounded-sm px-3 py-2 text-sm focus:outline-none focus:border-red-sportac" />
+                  </div>
+                  <button type="submit" className="bg-red-sportac text-white font-bold py-3 rounded-sm hover:bg-red-600 transition-colors text-sm">
+                    Bestelling plaatsen &amp; betalen
+                  </button>
+                </form>
               </div>
-              <div>
-                <label className="block text-sm font-semibold mb-1">E-mailadres *</label>
-                <input type="email" name="email" required className="w-full border border-[#e8e4df] rounded-sm px-3 py-2 text-sm focus:outline-none focus:border-red-sportac" />
-              </div>
-              <div>
-                <label className="block text-sm font-semibold mb-1">Telefoonnummer</label>
-                <input type="tel" name="phone" className="w-full border border-[#e8e4df] rounded-sm px-3 py-2 text-sm focus:outline-none focus:border-red-sportac" />
-              </div>
-              <button type="submit" className="bg-red-sportac text-white font-bold py-3 rounded-sm hover:bg-red-600 transition-colors text-sm">
-                Bestelling plaatsen &amp; betalen
-              </button>
-            </form>
-          </div>
-        </section>
+            </section>
+          );
+        })}
 
       </div>
     </div>
