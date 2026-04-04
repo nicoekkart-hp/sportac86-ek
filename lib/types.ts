@@ -3,12 +3,12 @@ export type EventRecord = {
   slug: string;
   title: string;
   description: string;
-  date: string;           // ISO date string "2025-04-12"
-  time: string;           // "18:00"
+  date: string;
+  time: string;
   location: string;
   image_url: string | null;
   max_attendees: number | null;
-  price_cents: number;    // 0 = free
+  price_cents: number;
   is_published: boolean;
   created_at: string;
 };
@@ -38,7 +38,8 @@ export type Donation = {
 
 export type Order = {
   id: string;
-  type: "candy" | "wine";
+  sale_id: string | null;
+  sale_name?: string;
   name: string;
   email: string;
   phone: string;
@@ -53,8 +54,8 @@ export type Order = {
 export type TeamMember = {
   id: string;
   name: string;
-  role: string;           // "Skipper" | "Coach" | "Begeleider"
-  discipline: string[] | null; // ["Freestyle"] | ["Speed"] | ["Freestyle", "Speed"] | null
+  role: string;
+  discipline: string[] | null;
   bio: {
     age?: string;
     why?: string;
@@ -78,9 +79,20 @@ export type Sponsor = {
 
 export type Product = {
   id: string;
-  type: "candy" | "wine";
+  sale_id: string;
+  sale_name?: string;
   name: string;
   price_cents: number;
+  is_active: boolean;
+  sort_order: number;
+  created_at: string;
+};
+
+export type Sale = {
+  id: string;
+  name: string;
+  slug: string;
+  description: string;
   is_active: boolean;
   sort_order: number;
   created_at: string;
