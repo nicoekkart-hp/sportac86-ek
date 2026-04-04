@@ -7,10 +7,13 @@ import { formatPrice } from "@/lib/format";
 
 export default async function EventDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{ betaald?: string }>;
 }) {
   const { slug } = await params;
+  const { betaald } = await searchParams;
   const supabase = createServerClient();
   const { data: event } = await supabase
     .from("events")
@@ -36,6 +39,12 @@ export default async function EventDetailPage({
 
   return (
     <div className="pt-16">
+      {betaald && (
+        <div className="bg-green-50 border-b border-green-200 px-6 py-3 text-center text-sm font-semibold text-green-800">
+          Inschrijving bevestigd! Je ontvangt een bevestiging per e-mail.
+        </div>
+      )}
+
       {/* Page header */}
       <div className="bg-gray-dark py-14 px-6 relative overflow-hidden">
         <div className="max-w-5xl mx-auto relative">
@@ -109,7 +118,11 @@ export default async function EventDetailPage({
                   Volzet — geen plaatsen meer beschikbaar.
                 </p>
               ) : (
-                <form action="/api/registrations" method="POST" className="flex flex-col gap-4">
+                <form
+                  action={ev.price_cents > 0 ? "/api/checkout/inschrijving" : "/api/registrations"}
+                  method="POST"
+                  className="flex flex-col gap-4"
+                >
                   <input type="hidden" name="event_id" value={ev.id} />
                   <div>
                     <label className="block text-sm font-semibold mb-1">Naam *</label>
@@ -130,7 +143,7 @@ export default async function EventDetailPage({
                       className="w-full border border-[#e8e4df] rounded-sm px-3 py-2 text-sm focus:outline-none focus:border-red-sportac"
                       placeholder="jouw@email.be"
                     />
-  </div>
+                  </div>
                   <div>
                     <label className="block text-sm font-semibold mb-1">Aantal personen *</label>
                     <input
@@ -156,11 +169,20 @@ export default async function EventDetailPage({
                     type="submit"
                     className="bg-red-sportac text-white font-bold py-3 rounded-sm hover:bg-red-600 transition-colors text-sm"
                   >
-                    Inschrijven — {formatPrice(ev.price_cents)}/pers
+                    {ev.price_cents > 0
+                      ? `Inschrijven & betalen — ${formatPrice(ev.price_cents)}/pers`
+                      : `Inschrijven — ${formatPrice(ev.price_cents)}`}
                   </button>
-                  <p className="text-xs text-gray-sub">
-                    Je ontvangt een bevestiging per e-mail.
-                  </p>
+                  {ev.price_cents > 0 && (
+                    <p className="text-xs text-gray-sub">
+                      Je wordt doorgestuurd naar de beveiligde betaalpagina van Stripe.
+                    </p>
+                  )}
+                  {ev.price_cents === 0 && (
+                    <p className="text-xs text-gray-sub">
+                      Je ontvangt een bevestiging per e-mail.
+                    </p>
+                  )}
                 </form>
               )}
             </>
