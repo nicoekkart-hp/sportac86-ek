@@ -7,7 +7,7 @@ import { redirect } from "next/navigation";
 export async function createProduct(formData: FormData) {
   const supabase = createAdminClient();
   const { error } = await supabase.from("products").insert({
-    type: formData.get("type") as string,
+    sale_id: formData.get("sale_id") as string,
     name: formData.get("name") as string,
     price_cents: Math.round(parseFloat(formData.get("price_euros") as string) * 100),
     is_active: formData.get("is_active") === "on",
@@ -22,7 +22,7 @@ export async function createProduct(formData: FormData) {
 export async function updateProduct(id: string, formData: FormData) {
   const supabase = createAdminClient();
   const { error } = await supabase.from("products").update({
-    type: formData.get("type") as string,
+    sale_id: formData.get("sale_id") as string,
     name: formData.get("name") as string,
     price_cents: Math.round(parseFloat(formData.get("price_euros") as string) * 100),
     is_active: formData.get("is_active") === "on",

@@ -4,12 +4,13 @@ import { Product } from "@/lib/types";
 import { deleteProduct, toggleProductActive } from "./actions";
 import { formatPrice } from "@/lib/format";
 
-const TYPE_LABELS: Record<string, string> = { candy: "Snoep", wine: "Wijn" };
-
 export default async function ProductenPage() {
   const supabase = createAdminClient();
-  const { data } = await supabase.from("products").select("*").order("type").order("sort_order");
-  const products: Product[] = data ?? [];
+  const { data } = await supabase
+    .from("products")
+    .select("*, sales(name)")
+    .order("sort_order");
+  const products: (Product & { sales: { name: string } | null })[] = data ?? [];
 
   return (
     <div className="p-8">
@@ -30,7 +31,7 @@ export default async function ProductenPage() {
             <div className="flex-1">
               <div className="flex items-center gap-2">
                 <span className="font-semibold text-sm">{p.name}</span>
-                <span className="text-[10px] font-bold bg-gray-100 text-gray-sub px-1.5 py-0.5 rounded-sm">{TYPE_LABELS[p.type]}</span>
+                {p.sales && <span className="text-[10px] font-bold bg-gray-100 text-gray-sub px-1.5 py-0.5 rounded-sm">{p.sales.name}</span>}
                 {!p.is_active && <span className="text-[10px] font-bold bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded-sm">Inactief</span>}
               </div>
               <p className="text-xs text-gray-sub mt-0.5">{formatPrice(p.price_cents)}</p>

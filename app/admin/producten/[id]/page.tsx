@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase-admin";
-import { Product } from "@/lib/types";
+import { Product, Sale } from "@/lib/types";
 import { ProductForm } from "../_ProductForm";
 import { updateProduct } from "../actions";
 
@@ -11,9 +11,13 @@ export default async function BewerkenProductPage({
 }) {
   const { id } = await params;
   const supabase = createAdminClient();
-  const { data } = await supabase.from("products").select("*").eq("id", id).single();
-  if (!data) notFound();
-  const product = data as Product;
+  const [{ data: productData }, { data: salesData }] = await Promise.all([
+    supabase.from("products").select("*").eq("id", id).single(),
+    supabase.from("sales").select("*").order("sort_order"),
+  ]);
+  if (!productData) notFound();
+  const product = productData as Product;
+  const sales: Sale[] = salesData ?? [];
   const action = updateProduct.bind(null, id);
 
   return (
@@ -22,7 +26,7 @@ export default async function BewerkenProductPage({
         <h1 className="font-condensed font-black italic text-4xl text-gray-dark">Product bewerken</h1>
         <p className="text-gray-sub text-sm mt-1">{product.name}</p>
       </div>
-      <ProductForm product={product} action={action} />
+      <ProductForm product={product} sales={sales} action={action} />
     </div>
   );
 }

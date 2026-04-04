@@ -1,18 +1,29 @@
-import { Product } from "@/lib/types";
+import { Product, Sale } from "@/lib/types";
 
-const types = [
-  { value: "candy", label: "Snoep" },
-  { value: "wine", label: "Wijn" },
-];
-
-export function ProductForm({ product, action }: { product?: Product; action: (formData: FormData) => Promise<void> }) {
+export function ProductForm({
+  product,
+  sales,
+  action,
+}: {
+  product?: Product;
+  sales: Sale[];
+  action: (formData: FormData) => Promise<void>;
+}) {
   return (
     <form action={action} className="flex flex-col gap-5 max-w-xl">
       <div className="grid sm:grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-semibold mb-1">Type *</label>
-          <select name="type" required defaultValue={product?.type ?? "candy"} className="w-full border border-[#e8e4df] rounded-sm px-3 py-2 text-sm focus:outline-none focus:border-red-sportac bg-white">
-            {types.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
+          <label className="block text-sm font-semibold mb-1">Verkoop *</label>
+          <select
+            name="sale_id"
+            required
+            defaultValue={product?.sale_id ?? ""}
+            className="w-full border border-[#e8e4df] rounded-sm px-3 py-2 text-sm focus:outline-none focus:border-red-sportac bg-white"
+          >
+            <option value="" disabled>Kies een verkoop...</option>
+            {sales.map((s) => (
+              <option key={s.id} value={s.id}>{s.name}</option>
+            ))}
           </select>
         </div>
         <div>
@@ -32,13 +43,26 @@ export function ProductForm({ product, action }: { product?: Product; action: (f
 
       <div>
         <label className="block text-sm font-semibold mb-1">Naam *</label>
-        <input type="text" name="name" required defaultValue={product?.name} className="w-full border border-[#e8e4df] rounded-sm px-3 py-2 text-sm focus:outline-none focus:border-red-sportac" placeholder="Mars (doos 24 stuks)" />
+        <input
+          type="text"
+          name="name"
+          required
+          defaultValue={product?.name}
+          className="w-full border border-[#e8e4df] rounded-sm px-3 py-2 text-sm focus:outline-none focus:border-red-sportac"
+          placeholder="Mars (doos 24 stuks)"
+        />
       </div>
 
       <div className="grid sm:grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-semibold mb-1">Volgorde</label>
-          <input type="number" name="sort_order" min={0} defaultValue={product?.sort_order ?? 0} className="w-full border border-[#e8e4df] rounded-sm px-3 py-2 text-sm focus:outline-none focus:border-red-sportac" />
+          <input
+            type="number"
+            name="sort_order"
+            min={0}
+            defaultValue={product?.sort_order ?? 0}
+            className="w-full border border-[#e8e4df] rounded-sm px-3 py-2 text-sm focus:outline-none focus:border-red-sportac"
+          />
         </div>
         <div className="flex items-end pb-2">
           <label className="flex items-center gap-2 text-sm cursor-pointer">
