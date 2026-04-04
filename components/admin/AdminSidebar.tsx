@@ -8,11 +8,13 @@ const navItems = [
   { href: "/admin", label: "Dashboard", icon: "⊞", exact: true },
   { href: "/admin/evenementen", label: "Evenementen", icon: "📅" },
   { href: "/admin/team", label: "Team", icon: "👥" },
+  { href: "/admin/producten", label: "Producten", icon: "🛍️" },
   { href: "/admin/inschrijvingen", label: "Inschrijvingen", icon: "📋" },
   { href: "/admin/bestellingen", label: "Bestellingen", icon: "🛒" },
   { href: "/admin/donaties", label: "Donaties", icon: "💶" },
   { href: "/admin/sponsors", label: "Sponsors", icon: "🏢" },
   { href: "/admin/sponsor-aanvragen", label: "Sponsor-aanvragen", icon: "📨" },
+  { href: "/admin/instellingen", label: "Instellingen", icon: "⚙️" },
 ];
 
 export function AdminSidebar() {
