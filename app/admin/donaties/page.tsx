@@ -1,5 +1,6 @@
 import { createAdminClient } from "@/lib/supabase-admin";
 import { Donation } from "@/lib/types";
+import { deleteDonation } from "./actions";
 
 export default async function DonattiesPage() {
   const supabase = createAdminClient();
@@ -29,6 +30,7 @@ export default async function DonattiesPage() {
               <th className="text-left px-4 py-2.5 font-semibold">Boodschap</th>
               <th className="text-left px-4 py-2.5 font-semibold">Status</th>
               <th className="text-left px-4 py-2.5 font-semibold">Datum</th>
+              <th />
             </tr>
           </thead>
           <tbody>
@@ -43,6 +45,15 @@ export default async function DonattiesPage() {
                   {d.payment_status === "pending" && <span className="text-[10px] font-bold bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded-sm">In afwachting</span>}
                 </td>
                 <td className="px-4 py-2.5 text-gray-sub text-xs">{new Date(d.created_at).toLocaleDateString("nl-BE")}</td>
+                <td className="px-4 py-2.5">
+                  {d.payment_status === "pending" && (
+                    <form action={deleteDonation.bind(null, d.id)}>
+                      <button type="submit" className="text-xs text-red-sportac border border-red-sportac/30 px-2 py-1 rounded-sm hover:bg-red-sportac/10 transition-colors">
+                        Verwijderen
+                      </button>
+                    </form>
+                  )}
+                </td>
               </tr>
             ))}
           </tbody>
