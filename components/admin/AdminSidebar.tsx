@@ -8,6 +8,7 @@ const navItems = [
   { href: "/admin", label: "Dashboard", icon: "⊞", exact: true },
   { href: "/admin/evenementen", label: "Evenementen", icon: "📅" },
   { href: "/admin/team", label: "Team", icon: "👥" },
+  { href: "/admin/verkopen", label: "Verkopen", icon: "🏷️" },
   { href: "/admin/producten", label: "Producten", icon: "🛍️" },
   { href: "/admin/inschrijvingen", label: "Inschrijvingen", icon: "📋" },
   { href: "/admin/bestellingen", label: "Bestellingen", icon: "🛒" },
