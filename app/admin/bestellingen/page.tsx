@@ -2,15 +2,13 @@ import { createAdminClient } from "@/lib/supabase-admin";
 import { Order } from "@/lib/types";
 import { toggleOrderStatus } from "./actions";
 
-const PRODUCT_NAMES: Record<string, string> = {
-  mars: "Mars", snickers: "Snickers", twix: "Twix",
-  rood: "Rode wijn", wit: "Witte wijn", rose: "Rosé",
-};
-
 export default async function BestellingenPage() {
   const supabase = createAdminClient();
-  const { data } = await supabase.from("orders").select("*").order("created_at", { ascending: false });
-  const orders: Order[] = data ?? [];
+  const { data } = await supabase
+    .from("orders")
+    .select("*, sales(name)")
+    .order("created_at", { ascending: false });
+  const orders: (Order & { sales: { name: string } | null })[] = data ?? [];
 
   const newOrders = orders.filter((o) => o.status === "new");
   const handledOrders = orders.filter((o) => o.status === "handled");
@@ -30,7 +28,7 @@ export default async function BestellingenPage() {
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-1">
                 <span className="font-semibold text-sm">{o.name}</span>
-                <span className="text-[10px] font-bold bg-gray-100 text-gray-sub px-1.5 py-0.5 rounded-sm uppercase">{o.type === "candy" ? "Snoep" : "Wijn"}</span>
+                {o.sales && <span className="text-[10px] font-bold bg-gray-100 text-gray-sub px-1.5 py-0.5 rounded-sm uppercase">{o.sales.name}</span>}
                 {o.status === "new" && <span className="text-[10px] font-bold bg-red-sportac/10 text-red-sportac px-1.5 py-0.5 rounded-sm">Nieuw</span>}
                 {o.payment_status === "paid" && <span className="text-[10px] font-bold bg-green-100 text-green-700 px-1.5 py-0.5 rounded-sm">Betaald</span>}
                 {o.payment_status === "pending" && <span className="text-[10px] font-bold bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded-sm">In afwachting</span>}
@@ -39,7 +37,7 @@ export default async function BestellingenPage() {
               <div className="flex flex-wrap gap-1.5 mt-1">
                 {Object.entries(o.items).map(([productId, qty]) => (
                   <span key={productId} className="text-[11px] bg-gray-100 px-2 py-0.5 rounded-sm">
-                    {PRODUCT_NAMES[productId] ?? productId} ×{qty}
+                    {productId} ×{qty}
                   </span>
                 ))}
               </div>
