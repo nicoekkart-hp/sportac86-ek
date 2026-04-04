@@ -45,6 +45,7 @@ export default async function InschrijvingenPage() {
                     <th className="text-left px-4 py-2.5 font-semibold">E-mail</th>
                     <th className="text-left px-4 py-2.5 font-semibold">Personen</th>
                     <th className="text-left px-4 py-2.5 font-semibold">Opmerkingen</th>
+                    <th className="text-left px-4 py-2.5 font-semibold">Betaling</th>
                     <th className="text-left px-4 py-2.5 font-semibold">Datum</th>
                   </tr>
                 </thead>
@@ -55,6 +56,11 @@ export default async function InschrijvingenPage() {
                       <td className="px-4 py-2.5 text-gray-sub">{r.email}</td>
                       <td className="px-4 py-2.5">{r.num_persons}</td>
                       <td className="px-4 py-2.5 text-gray-sub text-xs">{r.remarks ?? "—"}</td>
+                      <td className="px-4 py-2.5">
+                        {r.payment_status === "paid" && <span className="text-[10px] font-bold bg-green-100 text-green-700 px-1.5 py-0.5 rounded-sm">Betaald</span>}
+                        {r.payment_status === "pending" && <span className="text-[10px] font-bold bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded-sm">In afwachting</span>}
+                        {r.payment_status === "failed" && <span className="text-[10px] text-gray-sub">—</span>}
+                      </td>
                       <td className="px-4 py-2.5 text-gray-sub text-xs">{new Date(r.created_at).toLocaleDateString("nl-BE")}</td>
                     </tr>
                   ))}

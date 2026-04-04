@@ -27,6 +27,7 @@ export default async function DonattiesPage() {
               <th className="text-left px-4 py-2.5 font-semibold">E-mail</th>
               <th className="text-left px-4 py-2.5 font-semibold">Bedrag</th>
               <th className="text-left px-4 py-2.5 font-semibold">Boodschap</th>
+              <th className="text-left px-4 py-2.5 font-semibold">Status</th>
               <th className="text-left px-4 py-2.5 font-semibold">Datum</th>
             </tr>
           </thead>
@@ -37,6 +38,10 @@ export default async function DonattiesPage() {
                 <td className="px-4 py-2.5 text-gray-sub">{d.email}</td>
                 <td className="px-4 py-2.5 font-bold text-red-sportac">€{(d.amount_cents / 100).toFixed(2).replace(".", ",")}</td>
                 <td className="px-4 py-2.5 text-gray-sub text-xs">{d.message ?? "—"}</td>
+                <td className="px-4 py-2.5">
+                  {d.payment_status === "paid" && <span className="text-[10px] font-bold bg-green-100 text-green-700 px-1.5 py-0.5 rounded-sm">Betaald</span>}
+                  {d.payment_status === "pending" && <span className="text-[10px] font-bold bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded-sm">In afwachting</span>}
+                </td>
                 <td className="px-4 py-2.5 text-gray-sub text-xs">{new Date(d.created_at).toLocaleDateString("nl-BE")}</td>
               </tr>
             ))}
