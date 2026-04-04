@@ -93,6 +93,7 @@ export type Sale = {
   name: string;
   slug: string;
   description: string;
+  icon: string;
   is_active: boolean;
   sort_order: number;
   created_at: string;

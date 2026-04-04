@@ -5,28 +5,25 @@ import { TeamGrid } from "@/components/TeamGrid";
 import { SupportTile } from "@/components/SupportTile";
 import { PhotoGallery } from "@/components/PhotoGallery";
 import { createServerClient } from "@/lib/supabase";
-import { TeamMember, Sponsor } from "@/lib/types";
+import { TeamMember, Sponsor, Sale } from "@/lib/types";
 
 export default async function HomePage() {
   const supabase = createServerClient();
 
-  const { data: teamMembersData } = await supabase
-    .from("team_members")
-    .select("*")
-    .order("sort_order")
-    .limit(5);
-
-  const { data: sponsorsData } = await supabase
-    .from("sponsors")
-    .select("*")
-    .order("sort_order");
+  const [{ data: teamMembersData }, { data: sponsorsData }, { data: salesData }] =
+    await Promise.all([
+      supabase.from("team_members").select("*").order("sort_order"),
+      supabase.from("sponsors").select("*").order("sort_order"),
+      supabase.from("sales").select("*").eq("is_active", true).order("sort_order"),
+    ]);
 
   const teamMembers: TeamMember[] = teamMembersData ?? [];
   const sponsors: Sponsor[] = sponsorsData ?? [];
+  const sales: Sale[] = salesData ?? [];
 
   const ekDate = process.env.EK_DATE ?? "2026-08-10T00:00:00+02:00";
 
-  const supportTiles = [
+  const staticTiles = [
     {
       icon: "❤️",
       title: "Doneer",
@@ -41,21 +38,17 @@ export default async function HomePage() {
       actionLabel: "Inschrijven",
       href: "/agenda",
     },
-    {
-      icon: "🍬",
-      title: "Snoep bestellen",
-      description: "Bestel een doos snoep via onze actie en geniet ervan met het gezin.",
-      actionLabel: "Bestellen",
-      href: "/steunen#snoep",
-    },
-    {
-      icon: "🍷",
-      title: "Wijn bestellen",
-      description: "Kies uit een selectie wijnen en steun tegelijk onze reis naar Noorwegen.",
-      actionLabel: "Bestellen",
-      href: "/steunen#wijn",
-    },
   ];
+
+  const saleTiles = sales.map((sale) => ({
+    icon: sale.icon,
+    title: `${sale.name} bestellen`,
+    description: sale.description,
+    actionLabel: "Bestellen",
+    href: `/steunen#${sale.slug}`,
+  }));
+
+  const supportTiles = [...staticTiles, ...saleTiles];
 
   return (
     <>

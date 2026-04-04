@@ -16,6 +16,19 @@ export function SaleForm({ sale, action }: { sale?: Sale; action: (formData: For
           />
         </div>
         <div>
+          <label className="block text-sm font-semibold mb-1">Icoon (emoji)</label>
+          <input
+            type="text"
+            name="icon"
+            defaultValue={sale?.icon ?? "🛍️"}
+            placeholder="🍬"
+            className="w-full border border-[#e8e4df] rounded-sm px-3 py-2 text-sm focus:outline-none focus:border-red-sportac"
+          />
+        </div>
+      </div>
+
+      <div className="grid sm:grid-cols-2 gap-4">
+        <div>
           <label className="block text-sm font-semibold mb-1">Slug *</label>
           <input
             type="text"
