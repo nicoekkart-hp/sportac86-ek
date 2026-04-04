@@ -20,6 +20,8 @@ export type Registration = {
   email: string;
   num_persons: number;
   remarks: string | null;
+  stripe_session_id: string | null;
+  payment_status: "pending" | "paid" | "failed";
   created_at: string;
 };
 
@@ -29,6 +31,8 @@ export type Donation = {
   email: string;
   amount_cents: number;
   message: string | null;
+  stripe_session_id: string | null;
+  payment_status: "pending" | "paid" | "failed";
   created_at: string;
 };
 
@@ -38,9 +42,11 @@ export type Order = {
   name: string;
   email: string;
   phone: string;
-  items: Record<string, number>; // { "productName": quantity }
+  items: Record<string, number>;
   pickup_event_id: string | null;
   status: "new" | "handled";
+  stripe_session_id: string | null;
+  payment_status: "pending" | "paid" | "failed";
   created_at: string;
 };
 
@@ -66,6 +72,16 @@ export type Sponsor = {
   logo_url: string | null;
   website_url: string | null;
   level: "gold" | "silver" | "bronze" | "partner";
+  sort_order: number;
+  created_at: string;
+};
+
+export type Product = {
+  id: string;
+  type: "candy" | "wine";
+  name: string;
+  price_cents: number;
+  is_active: boolean;
   sort_order: number;
   created_at: string;
 };
