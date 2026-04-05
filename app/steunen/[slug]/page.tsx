@@ -74,15 +74,17 @@ export default async function SaleDetailPage({
 
             {products.map((p: Product) => (
               <div key={p.id} className="flex items-center justify-between">
-                <label className="text-sm font-semibold">{p.name}</label>
+                <label htmlFor={p.id} className="text-sm font-semibold">{p.name}</label>
                 <div className="flex items-center gap-2">
                   <span className="text-sm text-gray-sub">
                     €{(p.price_cents / 100).toFixed(2)}
                   </span>
                   <input
+                    id={p.id}
                     type="number"
                     name={`items.${p.id}`}
                     min={0}
+                    max={99}
                     defaultValue={0}
                     className="w-16 border border-[#e8e4df] rounded-sm px-2 py-1 text-sm text-center focus:outline-none focus:border-red-sportac"
                   />
