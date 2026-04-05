@@ -10,6 +10,7 @@ export async function POST(req: NextRequest) {
   const name = (formData.get("name") as string)?.trim();
   const email = (formData.get("email") as string)?.trim();
   const phone = (formData.get("phone") as string)?.trim() ?? "";
+  const contact_member_id = (formData.get("contact_member_id") as string)?.trim() || null;
 
   if (!sale_id || !sale_slug || !name || !email) {
     return NextResponse.json({ error: "Ongeldige invoer" }, { status: 400 });
@@ -46,7 +47,7 @@ export async function POST(req: NextRequest) {
   // Write pending order
   const { data: order, error: dbError } = await supabase
     .from("orders")
-    .insert({ sale_id, name, email, phone, items, status: "new", payment_status: "pending" })
+    .insert({ sale_id, name, email, phone, items, status: "new", payment_status: "pending", contact_member_id })
     .select("id")
     .single();
 
