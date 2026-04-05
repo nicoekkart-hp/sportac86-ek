@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
   const origin = req.headers.get("origin") ?? "http://localhost:3000";
 
   if (Object.keys(items).length === 0) {
-    return NextResponse.redirect(new URL(`/steunen#${sale_slug}`, req.url));
+    return NextResponse.redirect(new URL(`/steunen/${sale_slug}`, req.url));
   }
 
   // Write pending order
