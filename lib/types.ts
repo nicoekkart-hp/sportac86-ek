@@ -48,6 +48,9 @@ export type Order = {
   status: "new" | "handled";
   stripe_session_id: string | null;
   payment_status: "pending" | "paid" | "failed";
+  contact_member_id: string | null;
+  contact_member_name?: string;
+  is_delivered: boolean;
   created_at: string;
 };
 
