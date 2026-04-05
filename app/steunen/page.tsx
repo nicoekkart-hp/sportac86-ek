@@ -1,16 +1,12 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import { ScrollToSection } from "@/components/ScrollToSection";
+import { SupportTile } from "@/components/SupportTile";
 import { createAdminClient } from "@/lib/supabase-admin";
-import { Product, Sale } from "@/lib/types";
+import { Sale } from "@/lib/types";
 import { DonatieForm } from "./_DonatieForm";
 
-export default async function SteunenPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ betaald?: string }>;
-}) {
-  const { betaald } = await searchParams;
+export default async function SteunenPage() {
   const supabase = createAdminClient();
 
   const { data: salesData } = await supabase
@@ -21,19 +17,32 @@ export default async function SteunenPage({
 
   const sales: Sale[] = salesData ?? [];
 
-  // Fetch all active products in one query
-  const { data: productsData } = await supabase
-    .from("products")
-    .select("*")
-    .eq("is_active", true)
-    .order("sort_order");
+  const staticTiles = [
+    {
+      icon: "❤️",
+      title: "Doneer",
+      description: "Stort een vrij bedrag rechtstreeks ten voordele van het team.",
+      actionLabel: "Doneer nu",
+      href: "/steunen#doneer",
+    },
+    {
+      icon: "🍝",
+      title: "Spaghettiavond",
+      description: "Schrijf je in voor onze gezellige spaghettiavond en steun ons tegelijk.",
+      actionLabel: "Inschrijven",
+      href: "/agenda",
+    },
+  ];
 
-  const productsBySale = new Map<string, Product[]>();
-  for (const p of (productsData ?? []) as Product[]) {
-    const list = productsBySale.get(p.sale_id) ?? [];
-    list.push(p);
-    productsBySale.set(p.sale_id, list);
-  }
+  const saleTiles = sales.map((sale) => ({
+    icon: sale.icon,
+    title: `${sale.name} bestellen`,
+    description: sale.description,
+    actionLabel: "Meer info & bestellen",
+    href: `/steunen/${sale.slug}`,
+  }));
+
+  const allTiles = [...staticTiles, ...saleTiles];
 
   return (
     <div className="pt-16">
@@ -41,14 +50,7 @@ export default async function SteunenPage({
         <ScrollToSection />
       </Suspense>
 
-      {betaald && (
-        <div className="bg-green-50 border-b border-green-200 px-6 py-3 text-center text-sm font-semibold text-green-800">
-          {betaald === "donatie"
-            ? "Bedankt voor je donatie! Je ontvangt een bevestiging per e-mail."
-            : "Bestelling ontvangen! Je ontvangt een bevestiging per e-mail."}
-        </div>
-      )}
-
+      {/* Hero */}
       <div className="bg-gray-dark py-14 px-6 relative overflow-hidden">
         <div className="max-w-5xl mx-auto relative">
           <div className="text-sm text-gray-sub mb-4">
@@ -67,15 +69,33 @@ export default async function SteunenPage({
         </div>
       </div>
 
-      <div className="max-w-5xl mx-auto px-6 py-14 flex flex-col gap-16">
+      {/* Support tiles overview */}
+      <div className="bg-white py-14 px-6">
+        <div className="max-w-5xl mx-auto">
+          <div className="flex items-center gap-2 mb-8">
+            <div className="w-5 h-0.5 bg-red-sportac" />
+            <span className="text-xs font-bold tracking-[0.2em] uppercase text-red-sportac">
+              Kies hoe je steunt
+            </span>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-0.5 bg-[#2a2a2a] rounded-sm overflow-hidden">
+            {allTiles.map((tile) => (
+              <SupportTile key={tile.title} {...tile} />
+            ))}
+          </div>
+        </div>
+      </div>
 
-        {/* Donate */}
+      {/* Donate section */}
+      <div className="max-w-5xl mx-auto px-6 py-14">
         <section id="doneer">
           <div className="flex items-center gap-2 mb-3">
             <div className="w-5 h-0.5 bg-red-sportac" />
             <span className="text-xs font-bold tracking-[0.2em] uppercase text-red-sportac">Doneer</span>
           </div>
-          <h2 className="font-condensed font-black italic text-4xl text-gray-dark mb-5">Rechtstreeks steunen</h2>
+          <h2 className="font-condensed font-black italic text-4xl text-gray-dark mb-5">
+            Rechtstreeks steunen
+          </h2>
           <div className="bg-white border border-[#e8e4df] rounded-sm p-8 max-w-lg">
             <p className="text-gray-body text-sm leading-relaxed mb-6">
               Steun ons rechtstreeks via een veilige online betaling. Kies een bedrag of vul zelf in.
@@ -89,64 +109,6 @@ export default async function SteunenPage({
             </div>
           </div>
         </section>
-
-        {/* Dynamic sale sections */}
-        {sales.map((sale) => {
-          const products = productsBySale.get(sale.id) ?? [];
-          return (
-            <section key={sale.id} id={sale.slug}>
-              <div className="flex items-center gap-2 mb-3">
-                <div className="w-5 h-0.5 bg-red-sportac" />
-                <span className="text-xs font-bold tracking-[0.2em] uppercase text-red-sportac">{sale.name}</span>
-              </div>
-              <h2 className="font-condensed font-black italic text-4xl text-gray-dark mb-5">{sale.name} bestellen</h2>
-              <div className="bg-white border border-[#e8e4df] rounded-sm p-8 max-w-lg">
-                {sale.description && (
-                  <p className="text-gray-body text-sm leading-relaxed mb-6">{sale.description}</p>
-                )}
-                <form action="/api/checkout/bestelling" method="POST" className="flex flex-col gap-4">
-                  <input type="hidden" name="sale_id" value={sale.id} />
-                  <input type="hidden" name="sale_slug" value={sale.slug} />
-                  {products.map((p: Product) => (
-                    <div key={p.id} className="flex items-center justify-between">
-                      <label className="text-sm font-semibold">{p.name}</label>
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm text-gray-sub">€{(p.price_cents / 100).toFixed(2)}</span>
-                        <input
-                          type="number"
-                          name={`items.${p.id}`}
-                          min={0}
-                          defaultValue={0}
-                          className="w-16 border border-[#e8e4df] rounded-sm px-2 py-1 text-sm text-center focus:outline-none focus:border-red-sportac"
-                        />
-                      </div>
-                    </div>
-                  ))}
-                  {products.length === 0 && (
-                    <p className="text-sm text-gray-sub">Geen producten beschikbaar.</p>
-                  )}
-                  <hr className="border-[#e8e4df]" />
-                  <div>
-                    <label className="block text-sm font-semibold mb-1">Naam *</label>
-                    <input type="text" name="name" required className="w-full border border-[#e8e4df] rounded-sm px-3 py-2 text-sm focus:outline-none focus:border-red-sportac" />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold mb-1">E-mailadres *</label>
-                    <input type="email" name="email" required className="w-full border border-[#e8e4df] rounded-sm px-3 py-2 text-sm focus:outline-none focus:border-red-sportac" />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold mb-1">Telefoonnummer</label>
-                    <input type="tel" name="phone" className="w-full border border-[#e8e4df] rounded-sm px-3 py-2 text-sm focus:outline-none focus:border-red-sportac" />
-                  </div>
-                  <button type="submit" className="bg-red-sportac text-white font-bold py-3 rounded-sm hover:bg-red-600 transition-colors text-sm">
-                    Bestelling plaatsen &amp; betalen
-                  </button>
-                </form>
-              </div>
-            </section>
-          );
-        })}
-
       </div>
     </div>
   );
