@@ -72,8 +72,8 @@ export async function POST(req: NextRequest) {
     mode: "payment",
     customer_email: email,
     metadata: { type: "bestelling", record_id: order.id },
-    success_url: `${origin}/steunen?betaald=${sale_slug}`,
-    cancel_url: `${origin}/steunen#${sale_slug}`,
+    success_url: `${origin}/steunen/${sale_slug}?betaald=1`,
+    cancel_url: `${origin}/steunen/${sale_slug}`,
   });
 
   return NextResponse.redirect(session.url!, 303);
