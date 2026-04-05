@@ -2,12 +2,12 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { ScrollToSection } from "@/components/ScrollToSection";
 import { SupportTile } from "@/components/SupportTile";
-import { createAdminClient } from "@/lib/supabase-admin";
+import { createServerClient } from "@/lib/supabase";
 import { Sale } from "@/lib/types";
 import { DonatieForm } from "./_DonatieForm";
 
 export default async function SteunenPage() {
-  const supabase = createAdminClient();
+  const supabase = createServerClient();
 
   const { data: salesData } = await supabase
     .from("sales")
@@ -19,6 +19,7 @@ export default async function SteunenPage() {
 
   const staticTiles = [
     {
+      key: "doneer",
       icon: "❤️",
       title: "Doneer",
       description: "Stort een vrij bedrag rechtstreeks ten voordele van het team.",
@@ -26,6 +27,7 @@ export default async function SteunenPage() {
       href: "/steunen#doneer",
     },
     {
+      key: "spaghettiavond",
       icon: "🍝",
       title: "Spaghettiavond",
       description: "Schrijf je in voor onze gezellige spaghettiavond en steun ons tegelijk.",
@@ -35,6 +37,7 @@ export default async function SteunenPage() {
   ];
 
   const saleTiles = sales.map((sale) => ({
+    key: sale.id,
     icon: sale.icon,
     title: `${sale.name} bestellen`,
     description: sale.description,
@@ -80,7 +83,14 @@ export default async function SteunenPage() {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-0.5 bg-[#2a2a2a] rounded-sm overflow-hidden">
             {allTiles.map((tile) => (
-              <SupportTile key={tile.title} {...tile} />
+              <SupportTile
+                key={tile.key}
+                icon={tile.icon}
+                title={tile.title}
+                description={tile.description}
+                actionLabel={tile.actionLabel}
+                href={tile.href}
+              />
             ))}
           </div>
         </div>
