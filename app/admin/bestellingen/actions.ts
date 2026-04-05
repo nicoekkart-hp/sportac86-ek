@@ -22,3 +22,9 @@ export async function toggleDelivered(id: string, current: boolean) {
   await supabase.from("orders").update({ is_delivered: !current }).eq("id", id);
   revalidatePath("/admin/bestellingen");
 }
+
+export async function deleteOrder(id: string) {
+  const supabase = createAdminClient();
+  await supabase.from("orders").delete().eq("id", id).in("payment_status", ["pending", "failed"]);
+  revalidatePath("/admin/bestellingen");
+}

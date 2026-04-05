@@ -1,6 +1,6 @@
 import { createAdminClient } from "@/lib/supabase-admin";
 import { Order } from "@/lib/types";
-import { toggleOrderStatus, togglePaymentStatus, toggleDelivered } from "./actions";
+import { toggleOrderStatus, togglePaymentStatus, toggleDelivered, deleteOrder } from "./actions";
 
 type OrderRow = Order & {
   sales: { name: string } | null;
@@ -122,6 +122,18 @@ export default async function BestellingenPage() {
                   {o.is_delivered ? "↩ Nog te leveren" : "✓ Afgeleverd"}
                 </button>
               </form>
+
+              {/* Delete (only for unpaid orders) */}
+              {(o.payment_status === "pending" || o.payment_status === "failed") && (
+                <form action={deleteOrder.bind(null, o.id)}>
+                  <button
+                    type="submit"
+                    className="text-xs font-semibold px-3 py-1.5 rounded-sm border border-red-300 text-red-600 hover:bg-red-50 transition-colors"
+                  >
+                    Verwijderen
+                  </button>
+                </form>
+              )}
             </div>
           </div>
         ))}
