@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase-admin";
-import { Sale, Product } from "@/lib/types";
+import { Sale, Product, TeamMember } from "@/lib/types";
 
 export default async function SaleDetailPage({
   params,
@@ -34,6 +34,13 @@ export default async function SaleDetailPage({
     .order("sort_order");
 
   const products: Product[] = productsData ?? [];
+
+  const { data: membersData } = await supabase
+    .from("team_members")
+    .select("id, name")
+    .order("sort_order");
+
+  const members: Pick<TeamMember, "id" | "name">[] = membersData ?? [];
 
   return (
     <div className="pt-16">
@@ -123,6 +130,23 @@ export default async function SaleDetailPage({
                 name="phone"
                 className="w-full border border-[#e8e4df] rounded-sm px-3 py-2 text-sm focus:outline-none focus:border-red-sportac"
               />
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold mb-1">
+                Wie brengt jouw bestelling?{" "}
+                <span className="text-gray-sub font-normal">(optioneel)</span>
+              </label>
+              <select
+                name="contact_member_id"
+                defaultValue=""
+                className="w-full border border-[#e8e4df] rounded-sm px-3 py-2 text-sm focus:outline-none focus:border-red-sportac bg-white"
+              >
+                <option value="">— Geen voorkeur —</option>
+                {members.map((m) => (
+                  <option key={m.id} value={m.id}>{m.name}</option>
+                ))}
+              </select>
             </div>
 
             <button
