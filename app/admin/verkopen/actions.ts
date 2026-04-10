@@ -38,6 +38,7 @@ export async function updateSale(id: string, formData: FormData) {
   if (error) redirect("/admin/verkopen?error=1");
   revalidatePath("/admin/verkopen");
   revalidatePath("/steunen");
+  revalidatePath("/");
   redirect("/admin/verkopen");
 }
 
@@ -47,6 +48,7 @@ export async function deleteSale(id: string) {
   revalidatePath("/admin/verkopen");
   revalidatePath("/admin/producten");
   revalidatePath("/steunen");
+  revalidatePath("/");
   redirect("/admin/verkopen");
 }
 
@@ -55,4 +57,5 @@ export async function toggleSaleActive(id: string, currentValue: boolean) {
   await supabase.from("sales").update({ is_active: !currentValue }).eq("id", id);
   revalidatePath("/admin/verkopen");
   revalidatePath("/steunen");
+  revalidatePath("/");
 }

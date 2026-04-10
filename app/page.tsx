@@ -5,50 +5,60 @@ import { TeamGrid } from "@/components/TeamGrid";
 import { SupportTile } from "@/components/SupportTile";
 import { PhotoGallery } from "@/components/PhotoGallery";
 import { createServerClient } from "@/lib/supabase";
-import { TeamMember, Sponsor, Sale } from "@/lib/types";
+import { TeamMember, Sponsor, Sale, EventRecord } from "@/lib/types";
 
 export default async function HomePage() {
   const supabase = createServerClient();
 
-  const [{ data: teamMembersData }, { data: sponsorsData }, { data: salesData }] =
-    await Promise.all([
-      supabase.from("team_members").select("*").order("sort_order"),
-      supabase.from("sponsors").select("*").order("sort_order"),
-      supabase.from("sales").select("*").eq("is_active", true).order("sort_order"),
-    ]);
+  const [
+    { data: teamMembersData },
+    { data: sponsorsData },
+    { data: salesData },
+    { data: featuredEventsData },
+  ] = await Promise.all([
+    supabase.from("team_members").select("*").order("sort_order"),
+    supabase.from("sponsors").select("*").order("sort_order"),
+    supabase.from("sales").select("*").eq("is_active", true).order("sort_order"),
+    supabase
+      .from("events")
+      .select("*")
+      .eq("is_published", true)
+      .eq("show_on_steunen", true)
+      .order("date", { ascending: true, nullsFirst: false }),
+  ]);
 
   const teamMembers: TeamMember[] = teamMembersData ?? [];
   const sponsors: Sponsor[] = sponsorsData ?? [];
   const sales: Sale[] = salesData ?? [];
+  const featuredEvents: EventRecord[] = featuredEventsData ?? [];
 
   const ekDate = process.env.EK_DATE ?? "2026-08-10T00:00:00+02:00";
 
-  const staticTiles = [
-    {
-      icon: "❤️",
-      title: "Doneer",
-      description: "Stort een vrij bedrag rechtstreeks ten voordele van het team.",
-      actionLabel: "Doneer nu",
-      href: "/steunen#doneer",
-    },
-    {
-      icon: "🍝",
-      title: "Spaghettiavond",
-      description: "Schrijf je in voor onze gezellige spaghettiavond en steun ons tegelijk.",
-      actionLabel: "Inschrijven",
-      href: "/agenda",
-    },
-  ];
+  const donateTile = {
+    icon: "❤️",
+    title: "Doneer",
+    description: "Stort een vrij bedrag rechtstreeks ten voordele van het team.",
+    actionLabel: "Doneer nu",
+    href: "/steunen#doneer",
+  };
+
+  const eventTiles = featuredEvents.map((ev) => ({
+    icon: ev.icon,
+    title: ev.coming_soon ? `${ev.title} (binnenkort)` : ev.title,
+    description: ev.description,
+    actionLabel: ev.coming_soon ? "Binnenkort beschikbaar" : "Inschrijven",
+    href: `/agenda/${ev.slug}`,
+  }));
 
   const saleTiles = sales.map((sale) => ({
     icon: sale.icon,
-    title: `${sale.name} bestellen`,
+    title: sale.coming_soon ? `${sale.name} (binnenkort)` : `${sale.name} bestellen`,
     description: sale.description,
-    actionLabel: "Bestellen",
-    href: `/steunen#${sale.slug}`,
+    actionLabel: sale.coming_soon ? "Binnenkort beschikbaar" : "Bestellen",
+    href: `/steunen/${sale.slug}`,
   }));
 
-  const supportTiles = [...staticTiles, ...saleTiles];
+  const supportTiles = [donateTile, ...eventTiles, ...saleTiles];
 
   return (
     <>

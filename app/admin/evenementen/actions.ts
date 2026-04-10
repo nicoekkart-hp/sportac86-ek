@@ -40,6 +40,7 @@ export async function createEvent(formData: FormData) {
   revalidatePath("/admin/evenementen");
   revalidatePath("/agenda");
   revalidatePath("/steunen");
+  revalidatePath("/");
   redirect("/admin/evenementen");
 }
 
@@ -79,6 +80,7 @@ export async function updateEvent(id: string, formData: FormData) {
   revalidatePath("/admin/evenementen");
   revalidatePath("/agenda");
   revalidatePath("/steunen");
+  revalidatePath("/");
   revalidatePath(`/agenda/${slug}`);
   redirect("/admin/evenementen");
 }
@@ -89,6 +91,7 @@ export async function deleteEvent(id: string) {
   revalidatePath("/admin/evenementen");
   revalidatePath("/agenda");
   revalidatePath("/steunen");
+  revalidatePath("/");
   redirect("/admin/evenementen");
 }
 
@@ -98,4 +101,5 @@ export async function togglePublish(id: string, current: boolean) {
   revalidatePath("/admin/evenementen");
   revalidatePath("/agenda");
   revalidatePath("/steunen");
+  revalidatePath("/");
 }
