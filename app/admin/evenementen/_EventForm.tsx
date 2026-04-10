@@ -55,6 +55,23 @@ export function EventForm({ event, action }: { event?: EventRecord; action: (for
         <label htmlFor="is_published" className="text-sm font-semibold">Gepubliceerd (zichtbaar op de site)</label>
       </div>
 
+      <div className="flex items-center gap-2">
+        <input type="checkbox" name="show_on_steunen" id="show_on_steunen" defaultChecked={event?.show_on_steunen} className="w-4 h-4 accent-red-500" />
+        <label htmlFor="show_on_steunen" className="text-sm font-semibold">Tonen als tegel op steunen-pagina</label>
+      </div>
+
+      <div>
+        <label className="block text-sm font-semibold mb-1">Icoon (emoji)</label>
+        <input
+          type="text"
+          name="icon"
+          defaultValue={event?.icon ?? "📅"}
+          placeholder="🍝"
+          className="w-32 border border-[#e8e4df] rounded-sm px-3 py-2 text-sm focus:outline-none focus:border-red-sportac"
+        />
+        <p className="text-xs text-gray-sub mt-1">Gebruikt voor de tegel op de steunen-pagina.</p>
+      </div>
+
       <div className="flex gap-3 pt-2">
         <button type="submit" className="bg-red-sportac text-white font-bold text-sm px-6 py-2.5 rounded-sm hover:bg-red-600 transition-colors">
           Opslaan

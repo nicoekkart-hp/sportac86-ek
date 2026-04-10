@@ -14,6 +14,7 @@ export async function createSale(formData: FormData) {
     description: (formData.get("description") as string).trim(),
     icon: ((formData.get("icon") as string) || "🛍️").trim(),
     is_active: formData.get("is_active") === "on",
+    coming_soon: formData.get("coming_soon") === "on",
     sort_order: parseInt(formData.get("sort_order") as string, 10) || 0,
   });
   if (error) redirect("/admin/verkopen?error=1");
@@ -31,6 +32,7 @@ export async function updateSale(id: string, formData: FormData) {
     description: (formData.get("description") as string).trim(),
     icon: ((formData.get("icon") as string) || "🛍️").trim(),
     is_active: formData.get("is_active") === "on",
+    coming_soon: formData.get("coming_soon") === "on",
     sort_order: parseInt(formData.get("sort_order") as string, 10) || 0,
   }).eq("id", id);
   if (error) redirect("/admin/verkopen?error=1");

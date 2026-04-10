@@ -17,6 +17,8 @@ export async function createEvent(formData: FormData) {
   const max_attendees = formData.get("max_attendees") ? parseInt(formData.get("max_attendees") as string, 10) : null;
   const image_url = (formData.get("image_url") as string) || null;
   const is_published = formData.get("is_published") === "on";
+  const show_on_steunen = formData.get("show_on_steunen") === "on";
+  const icon = ((formData.get("icon") as string) || "📅").trim();
 
   const { error } = await supabase.from("events").insert({
     title, slug, description, date, time, location,
@@ -24,6 +26,8 @@ export async function createEvent(formData: FormData) {
     max_attendees,
     image_url,
     is_published,
+    show_on_steunen,
+    icon,
   });
 
   if (error) {
@@ -33,6 +37,7 @@ export async function createEvent(formData: FormData) {
 
   revalidatePath("/admin/evenementen");
   revalidatePath("/agenda");
+  revalidatePath("/steunen");
   redirect("/admin/evenementen");
 }
 
@@ -49,6 +54,8 @@ export async function updateEvent(id: string, formData: FormData) {
   const max_attendees = formData.get("max_attendees") ? parseInt(formData.get("max_attendees") as string, 10) : null;
   const image_url = (formData.get("image_url") as string) || null;
   const is_published = formData.get("is_published") === "on";
+  const show_on_steunen = formData.get("show_on_steunen") === "on";
+  const icon = ((formData.get("icon") as string) || "📅").trim();
 
   const { error } = await supabase.from("events").update({
     title, slug, description, date, time, location,
@@ -56,6 +63,8 @@ export async function updateEvent(id: string, formData: FormData) {
     max_attendees,
     image_url,
     is_published,
+    show_on_steunen,
+    icon,
   }).eq("id", id);
 
   if (error) {
@@ -65,6 +74,7 @@ export async function updateEvent(id: string, formData: FormData) {
 
   revalidatePath("/admin/evenementen");
   revalidatePath("/agenda");
+  revalidatePath("/steunen");
   revalidatePath(`/agenda/${slug}`);
   redirect("/admin/evenementen");
 }
@@ -74,6 +84,7 @@ export async function deleteEvent(id: string) {
   await supabase.from("events").delete().eq("id", id);
   revalidatePath("/admin/evenementen");
   revalidatePath("/agenda");
+  revalidatePath("/steunen");
   redirect("/admin/evenementen");
 }
 
@@ -82,4 +93,5 @@ export async function togglePublish(id: string, current: boolean) {
   await supabase.from("events").update({ is_published: !current }).eq("id", id);
   revalidatePath("/admin/evenementen");
   revalidatePath("/agenda");
+  revalidatePath("/steunen");
 }

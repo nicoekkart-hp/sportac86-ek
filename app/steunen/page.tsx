@@ -3,7 +3,7 @@ import { Suspense } from "react";
 import { ScrollToSection } from "@/components/ScrollToSection";
 import { SupportTile } from "@/components/SupportTile";
 import { createServerClient } from "@/lib/supabase";
-import { Sale } from "@/lib/types";
+import { EventRecord, Sale } from "@/lib/types";
 import { DonatieForm } from "./_DonatieForm";
 
 export default async function SteunenPage() {
@@ -17,31 +17,41 @@ export default async function SteunenPage() {
 
   const sales: Sale[] = salesData ?? [];
 
-  const staticTiles = [
-    {
-      key: "doneer",
-      icon: "❤️",
-      title: "Doneer",
-      description: "Stort een vrij bedrag rechtstreeks ten voordele van het team.",
-      actionLabel: "Doneer nu",
-      href: "/steunen#doneer",
-    },
-    {
-      key: "spaghettiavond",
-      icon: "🍝",
-      title: "Spaghettiavond",
-      description: "Schrijf je in voor onze gezellige spaghettiavond en steun ons tegelijk.",
-      actionLabel: "Inschrijven",
-      href: "/agenda",
-    },
-  ];
+  const { data: eventsData } = await supabase
+    .from("events")
+    .select("*")
+    .eq("is_published", true)
+    .eq("show_on_steunen", true)
+    .order("date");
+
+  const featuredEvents: EventRecord[] = eventsData ?? [];
+
+  const donateTile = {
+    key: "doneer",
+    icon: "❤️",
+    title: "Doneer",
+    description: "Stort een vrij bedrag rechtstreeks ten voordele van het team.",
+    actionLabel: "Doneer nu",
+    href: "/steunen#doneer",
+  };
+
+  const eventTiles = featuredEvents.map((ev) => ({
+    key: ev.id,
+    icon: ev.icon,
+    title: ev.title,
+    description: ev.description,
+    actionLabel: "Inschrijven",
+    href: `/agenda/${ev.slug}`,
+  }));
+
+  const staticTiles = [donateTile, ...eventTiles];
 
   const saleTiles = sales.map((sale) => ({
     key: sale.id,
     icon: sale.icon,
-    title: `${sale.name} bestellen`,
+    title: sale.coming_soon ? `${sale.name} (binnenkort)` : `${sale.name} bestellen`,
     description: sale.description,
-    actionLabel: "Meer info & bestellen",
+    actionLabel: sale.coming_soon ? "Binnenkort beschikbaar" : "Meer info & bestellen",
     href: `/steunen/${sale.slug}`,
   }));
 

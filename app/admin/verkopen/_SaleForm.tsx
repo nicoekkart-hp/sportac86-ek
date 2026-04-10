@@ -65,10 +65,14 @@ export function SaleForm({ sale, action }: { sale?: Sale; action: (formData: For
             className="w-full border border-[#e8e4df] rounded-sm px-3 py-2 text-sm focus:outline-none focus:border-red-sportac"
           />
         </div>
-        <div className="flex items-end pb-2">
+        <div className="flex flex-col items-start justify-end pb-2 gap-2">
           <label className="flex items-center gap-2 text-sm cursor-pointer">
             <input type="checkbox" name="is_active" defaultChecked={sale?.is_active ?? true} className="accent-red-sportac" />
             Actief (zichtbaar op site)
+          </label>
+          <label className="flex items-center gap-2 text-sm cursor-pointer">
+            <input type="checkbox" name="coming_soon" defaultChecked={sale?.coming_soon ?? false} className="accent-red-sportac" />
+            Binnenkort beschikbaar (bestellen uitgeschakeld)
           </label>
         </div>
       </div>

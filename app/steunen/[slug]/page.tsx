@@ -74,6 +74,26 @@ export default async function SaleDetailPage({
 
       {/* Order form */}
       <div className="max-w-5xl mx-auto px-6 py-14">
+        {sale.coming_soon ? (
+          <div className="bg-white border border-[#e8e4df] rounded-sm p-8 max-w-lg text-center">
+            <div className="text-5xl mb-4">⏳</div>
+            <p className="text-xs font-bold tracking-[0.2em] uppercase text-red-sportac mb-3">
+              Binnenkort beschikbaar
+            </p>
+            <h2 className="font-condensed font-black italic text-3xl text-gray-dark mb-3">
+              Nog even geduld
+            </h2>
+            <p className="text-gray-body text-sm leading-relaxed">
+              Onze {sale.name.toLowerCase()}-actie wordt nog voorbereid. Hou deze pagina in de gaten — binnenkort kan je hier bestellen.
+            </p>
+            <Link
+              href="/steunen"
+              className="inline-block mt-6 text-sm font-bold text-red-sportac hover:underline"
+            >
+              ← Terug naar steunen
+            </Link>
+          </div>
+        ) : (
         <div className="bg-white border border-[#e8e4df] rounded-sm p-8 max-w-lg">
           <form action="/api/checkout/bestelling" method="POST" className="flex flex-col gap-4">
             <input type="hidden" name="sale_id" value={sale.id} />
@@ -157,6 +177,7 @@ export default async function SaleDetailPage({
             </button>
           </form>
         </div>
+        )}
       </div>
     </div>
   );

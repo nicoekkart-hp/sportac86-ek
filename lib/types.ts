@@ -10,6 +10,8 @@ export type EventRecord = {
   max_attendees: number | null;
   price_cents: number;
   is_published: boolean;
+  show_on_steunen: boolean;
+  icon: string;
   created_at: string;
 };
 
@@ -98,6 +100,7 @@ export type Sale = {
   description: string;
   icon: string;
   is_active: boolean;
+  coming_soon: boolean;
   sort_order: number;
   created_at: string;
 };
