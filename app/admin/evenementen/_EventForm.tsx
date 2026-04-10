@@ -21,12 +21,13 @@ export function EventForm({ event, action }: { event?: EventRecord; action: (for
 
       <div className="grid sm:grid-cols-3 gap-4">
         <div>
-          <label className="block text-sm font-semibold mb-1">Datum *</label>
-          <input type="date" name="date" required defaultValue={event?.date} className="w-full border border-[#e8e4df] rounded-sm px-3 py-2 text-sm focus:outline-none focus:border-red-sportac" />
+          <label className="block text-sm font-semibold mb-1">Datum</label>
+          <input type="date" name="date" defaultValue={event?.date ?? ""} className="w-full border border-[#e8e4df] rounded-sm px-3 py-2 text-sm focus:outline-none focus:border-red-sportac" />
+          <p className="text-xs text-gray-sub mt-1">Leeglaten voor &ldquo;nog te bepalen&rdquo;.</p>
         </div>
         <div>
-          <label className="block text-sm font-semibold mb-1">Uur *</label>
-          <input type="time" name="time" required defaultValue={event?.time} className="w-full border border-[#e8e4df] rounded-sm px-3 py-2 text-sm focus:outline-none focus:border-red-sportac" />
+          <label className="block text-sm font-semibold mb-1">Uur</label>
+          <input type="time" name="time" defaultValue={event?.time ?? ""} className="w-full border border-[#e8e4df] rounded-sm px-3 py-2 text-sm focus:outline-none focus:border-red-sportac" />
         </div>
         <div>
           <label className="block text-sm font-semibold mb-1">Prijs (€)</label>
@@ -36,8 +37,8 @@ export function EventForm({ event, action }: { event?: EventRecord; action: (for
 
       <div className="grid sm:grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-semibold mb-1">Locatie *</label>
-          <input type="text" name="location" required defaultValue={event?.location} className="w-full border border-[#e8e4df] rounded-sm px-3 py-2 text-sm focus:outline-none focus:border-red-sportac" />
+          <label className="block text-sm font-semibold mb-1">Locatie</label>
+          <input type="text" name="location" defaultValue={event?.location} className="w-full border border-[#e8e4df] rounded-sm px-3 py-2 text-sm focus:outline-none focus:border-red-sportac" />
         </div>
         <div>
           <label className="block text-sm font-semibold mb-1">Max. deelnemers</label>
@@ -53,6 +54,11 @@ export function EventForm({ event, action }: { event?: EventRecord; action: (for
       <div className="flex items-center gap-2">
         <input type="checkbox" name="is_published" id="is_published" defaultChecked={event?.is_published} className="w-4 h-4 accent-red-500" />
         <label htmlFor="is_published" className="text-sm font-semibold">Gepubliceerd (zichtbaar op de site)</label>
+      </div>
+
+      <div className="flex items-center gap-2">
+        <input type="checkbox" name="coming_soon" id="coming_soon" defaultChecked={event?.coming_soon ?? false} className="w-4 h-4 accent-red-500" />
+        <label htmlFor="coming_soon" className="text-sm font-semibold">Binnenkort beschikbaar (inschrijven uitgeschakeld)</label>
       </div>
 
       <div className="flex items-center gap-2">

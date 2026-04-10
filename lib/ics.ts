@@ -29,6 +29,7 @@ export function generateICS(events: EventRecord[]): string {
   ];
 
   for (const ev of events) {
+    if (!ev.date || !ev.time) continue;
     const start = toICSLocal(ev.date, ev.time);
     // Add 2 hours for end time
     const [hour, minute] = ev.time.split(":").map(Number);

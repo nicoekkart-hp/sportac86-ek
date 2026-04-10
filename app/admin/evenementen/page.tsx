@@ -35,7 +35,7 @@ export default async function EvenementenPage() {
                   <span className="text-[10px] font-bold bg-gray-100 text-gray-sub px-1.5 py-0.5 rounded-sm">Concept</span>
                 )}
               </div>
-              <p className="text-xs text-gray-sub">{ev.date} · {ev.time.slice(0, 5)} · {ev.location}</p>
+              <p className="text-xs text-gray-sub">{[ev.date ?? "TBD", ev.time?.slice(0, 5), ev.location].filter(Boolean).join(" · ")}</p>
             </div>
             <div className="flex items-center gap-2">
               <form action={togglePublish.bind(null, ev.id, ev.is_published)}>

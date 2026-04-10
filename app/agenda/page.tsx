@@ -9,23 +9,19 @@ export default async function AgendaPage() {
   const supabase = createServerClient();
   const today = new Date().toISOString().split("T")[0];
 
-  const { data: upcomingData } = await supabase
+  const { data: allData } = await supabase
     .from("events")
     .select("*")
     .eq("is_published", true)
-    .gte("date", today)
-    .order("date");
+    .order("date", { ascending: true, nullsFirst: false });
 
-  const { data: pastData } = await supabase
-    .from("events")
-    .select("*")
-    .eq("is_published", true)
-    .lt("date", today)
-    .order("date", { ascending: false })
-    .limit(5);
+  const all: EventRecord[] = allData ?? [];
+  const upcoming = all.filter((ev) => !ev.date || ev.date >= today);
+  const pastEvents = all
+    .filter((ev) => ev.date && ev.date < today)
+    .sort((a, b) => (b.date ?? "").localeCompare(a.date ?? ""))
+    .slice(0, 5);
 
-  const upcoming: EventRecord[] = upcomingData ?? [];
-  const pastEvents: EventRecord[] = pastData ?? [];
   const featured = upcoming[0] as EventRecord | undefined;
   const rest = upcoming.slice(1);
 
@@ -80,15 +76,21 @@ export default async function AgendaPage() {
                 <div className="flex gap-5 mb-4 flex-wrap">
                   <span className="text-sm text-gray-sub flex items-center gap-1.5">
                     📅 <strong className="text-gray-dark">
-                      {new Date(featured.date).toLocaleDateString("nl-BE", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
+                      {featured.date
+                        ? new Date(featured.date).toLocaleDateString("nl-BE", { weekday: "long", day: "numeric", month: "long", year: "numeric" })
+                        : "Datum nog te bepalen"}
                     </strong>
                   </span>
-                  <span className="text-sm text-gray-sub flex items-center gap-1.5">
-                    🕖 <strong className="text-gray-dark">{featured.time.slice(0, 5)}</strong>
-                  </span>
-                  <span className="text-sm text-gray-sub flex items-center gap-1.5">
-                    📍 <strong className="text-gray-dark">{featured.location}</strong>
-                  </span>
+                  {featured.time && (
+                    <span className="text-sm text-gray-sub flex items-center gap-1.5">
+                      🕖 <strong className="text-gray-dark">{featured.time.slice(0, 5)}</strong>
+                    </span>
+                  )}
+                  {featured.location && (
+                    <span className="text-sm text-gray-sub flex items-center gap-1.5">
+                      📍 <strong className="text-gray-dark">{featured.location}</strong>
+                    </span>
+                  )}
                 </div>
                 <h2 className="font-condensed font-black italic text-[38px] leading-tight text-gray-dark mb-3">
                   {featured.title}
@@ -98,7 +100,7 @@ export default async function AgendaPage() {
                 </p>
               </div>
               <div className="flex items-center justify-between flex-wrap gap-4">
-                {featured.max_attendees !== null && (
+                {!featured.coming_soon && featured.max_attendees !== null && (
                   <p className="text-sm text-gray-sub">
                     Schrijf je in voor{" "}
                     <strong className="text-red-sportac">
@@ -114,7 +116,7 @@ export default async function AgendaPage() {
                   >
                     Meer info
                   </Link>
-                  {featured.max_attendees !== null && (
+                  {!featured.coming_soon && featured.max_attendees !== null && (
                     <Link
                       href={`/agenda/${featured.slug}#inschrijven`}
                       className="bg-red-sportac text-white font-bold text-sm px-7 py-3 rounded-sm hover:bg-red-600 transition-colors"

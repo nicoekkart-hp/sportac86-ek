@@ -3,8 +3,8 @@ export type EventRecord = {
   slug: string;
   title: string;
   description: string;
-  date: string;
-  time: string;
+  date: string | null;
+  time: string | null;
   location: string;
   image_url: string | null;
   max_attendees: number | null;
@@ -12,6 +12,7 @@ export type EventRecord = {
   is_published: boolean;
   show_on_steunen: boolean;
   icon: string;
+  coming_soon: boolean;
   created_at: string;
 };
 

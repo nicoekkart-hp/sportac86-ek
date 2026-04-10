@@ -2,10 +2,11 @@ import Link from "next/link";
 import { EventRecord } from "@/lib/types";
 import { formatPrice } from "@/lib/format";
 
-function formatDate(dateStr: string) {
+function formatDate(dateStr: string | null) {
+  if (!dateStr) return { day: "—", month: "TBD" };
   const d = new Date(dateStr);
   return {
-    day: d.getDate(),
+    day: String(d.getDate()),
     month: d.toLocaleString("nl-BE", { month: "short" }),
   };
 }
@@ -34,7 +35,7 @@ export function EventRow({ event, past = false }: { event: EventRecord; past?: b
       <div>
         <h3 className="font-bold text-[15px] text-gray-dark mb-1">{event.title}</h3>
         <p className="text-sm text-gray-sub">
-          {event.location} · {event.time.slice(0, 5)}
+          {[event.location, event.time?.slice(0, 5)].filter(Boolean).join(" · ") || "Details volgen"}
         </p>
         <div className="flex gap-1.5 mt-2 flex-wrap">
           {event.price_cents === 0 ? (
@@ -46,9 +47,14 @@ export function EventRow({ event, past = false }: { event: EventRecord; past?: b
               Betalend
             </span>
           )}
-          {event.max_attendees !== null && (
+          {!event.coming_soon && event.max_attendees !== null && (
             <span className="text-[11px] font-bold px-2 py-0.5 rounded-sm bg-red-sportac/10 text-red-sportac">
               Inschrijving vereist
+            </span>
+          )}
+          {event.coming_soon && (
+            <span className="text-[11px] font-bold px-2 py-0.5 rounded-sm bg-amber-100 text-amber-700">
+              Binnenkort
             </span>
           )}
         </div>
@@ -61,7 +67,7 @@ export function EventRow({ event, past = false }: { event: EventRecord; past?: b
         </div>
         {!isPast && (
           <span className="text-xs font-bold bg-gray-dark text-white px-4 py-2 rounded-sm">
-            {event.max_attendees !== null ? "Inschrijven" : "Meer info"}
+            {!event.coming_soon && event.max_attendees !== null ? "Inschrijven" : "Meer info"}
           </span>
         )}
         {isPast && (

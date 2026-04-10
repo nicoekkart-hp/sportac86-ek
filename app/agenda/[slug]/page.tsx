@@ -25,7 +25,7 @@ export default async function EventDetailPage({
   if (!event) notFound();
 
   const ev = event as EventRecord;
-  const isPast = new Date(ev.date) < new Date();
+  const isPast = ev.date ? new Date(ev.date) < new Date() : false;
 
   const { data: regData } = await supabase
     .from("registrations")
@@ -61,15 +61,21 @@ export default async function EventDetailPage({
           <div className="flex gap-6 flex-wrap">
             <span className="text-gray-sub text-sm flex items-center gap-1.5">
               📅 <strong className="text-white">
-                {new Date(ev.date).toLocaleDateString("nl-BE", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
+                {ev.date
+                  ? new Date(ev.date).toLocaleDateString("nl-BE", { weekday: "long", day: "numeric", month: "long", year: "numeric" })
+                  : "Datum nog te bepalen"}
               </strong>
             </span>
-            <span className="text-gray-sub text-sm flex items-center gap-1.5">
-              🕖 <strong className="text-white">{ev.time.slice(0, 5)}</strong>
-            </span>
-            <span className="text-gray-sub text-sm flex items-center gap-1.5">
-              📍 <strong className="text-white">{ev.location}</strong>
-            </span>
+            {ev.time && (
+              <span className="text-gray-sub text-sm flex items-center gap-1.5">
+                🕖 <strong className="text-white">{ev.time.slice(0, 5)}</strong>
+              </span>
+            )}
+            {ev.location && (
+              <span className="text-gray-sub text-sm flex items-center gap-1.5">
+                📍 <strong className="text-white">{ev.location}</strong>
+              </span>
+            )}
             <span className="text-gray-sub text-sm flex items-center gap-1.5">
               💶 <strong className="text-white">{formatPrice(ev.price_cents)}</strong> per persoon
             </span>
@@ -103,6 +109,16 @@ export default async function EventDetailPage({
             <p className="text-gray-sub text-sm text-center py-4">
               Dit evenement is voorbij.
             </p>
+          ) : ev.coming_soon ? (
+            <div className="text-center py-4">
+              <div className="text-4xl mb-3">⏳</div>
+              <p className="text-xs font-bold tracking-[0.2em] uppercase text-red-sportac mb-2">
+                Binnenkort beschikbaar
+              </p>
+              <p className="text-sm text-gray-body leading-relaxed">
+                De details voor dit evenement worden nog uitgewerkt. Kom later terug voor meer info en inschrijvingen.
+              </p>
+            </div>
           ) : (
             <>
               <h3 className="font-bold text-lg mb-1">Inschrijven</h3>
