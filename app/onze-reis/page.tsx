@@ -61,8 +61,7 @@ export default function OnzeReisPage() {
           </p>
           <p className="text-gray-body text-[15px] leading-relaxed mb-4">
             Het EK is de grootste ropeskippingcompetitie in Europa. Teams uit meer dan 30
-            landen nemen deel in disciplines als speed, freestyle en teamspringen. Voor een
-            kleine club uit Deinze is dit een historische prestatie.
+            landen nemen deel in disciplines als speed, freestyle en teamspringen.
           </p>
           <p className="text-gray-body text-[15px] leading-relaxed">
             Maar de reis naar Noorwegen kost geld. Reiskosten, verblijf, wedstrijdmateriaal —
