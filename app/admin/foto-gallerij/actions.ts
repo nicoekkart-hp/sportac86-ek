@@ -57,6 +57,18 @@ export async function updateGalleryPhoto(id: string, formData: FormData) {
   redirect("/admin/foto-gallerij");
 }
 
+export async function reorderGalleryPhotos(orderedIds: string[]): Promise<void> {
+  if (!Array.isArray(orderedIds) || orderedIds.length === 0) return;
+  const supabase = createAdminClient();
+  await Promise.all(
+    orderedIds.map((id, index) =>
+      supabase.from("gallery_photos").update({ sort_order: index }).eq("id", id)
+    )
+  );
+  revalidatePath("/admin/foto-gallerij");
+  revalidatePath("/");
+}
+
 export async function deleteGalleryPhoto(id: string) {
   const supabase = createAdminClient();
   await supabase.from("gallery_photos").delete().eq("id", id);
