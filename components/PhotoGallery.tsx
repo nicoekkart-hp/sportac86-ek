@@ -84,7 +84,7 @@ export function PhotoGallery({ photos, initialVisible = 6 }: PhotoGalleryProps) 
           onClick={() => setShowAll(true)}
           className="mt-4 w-full py-3 border-2 border-dashed border-gray-300 rounded-sm text-sm font-semibold text-gray-sub hover:border-red-sportac hover:text-red-sportac transition-colors"
         >
-          +{photos.length - initialVisible} meer foto&apos;s
+          +{photos.length - initialVisible}&nbsp;meer foto&apos;s
         </button>
       )}
 
