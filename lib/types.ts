@@ -16,6 +16,15 @@ export type EventRecord = {
   created_at: string;
 };
 
+export type GalleryPhoto = {
+  id: string;
+  image_url: string;
+  alt: string;
+  sort_order: number;
+  is_published: boolean;
+  created_at: string;
+};
+
 export type Registration = {
   id: string;
   event_id: string;

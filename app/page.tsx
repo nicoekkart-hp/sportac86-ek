@@ -5,7 +5,7 @@ import { TeamGrid } from "@/components/TeamGrid";
 import { SupportTile } from "@/components/SupportTile";
 import { PhotoGallery } from "@/components/PhotoGallery";
 import { createServerClient } from "@/lib/supabase";
-import { TeamMember, Sponsor, Sale, EventRecord } from "@/lib/types";
+import { TeamMember, Sponsor, Sale, EventRecord, GalleryPhoto } from "@/lib/types";
 
 export default async function HomePage() {
   const supabase = createServerClient();
@@ -15,6 +15,7 @@ export default async function HomePage() {
     { data: sponsorsData },
     { data: salesData },
     { data: featuredEventsData },
+    { data: galleryData },
   ] = await Promise.all([
     supabase.from("team_members").select("*").order("sort_order"),
     supabase.from("sponsors").select("*").order("sort_order"),
@@ -25,12 +26,18 @@ export default async function HomePage() {
       .eq("is_published", true)
       .eq("show_on_steunen", true)
       .order("date", { ascending: true, nullsFirst: false }),
+    supabase
+      .from("gallery_photos")
+      .select("*")
+      .eq("is_published", true)
+      .order("sort_order"),
   ]);
 
   const teamMembers: TeamMember[] = teamMembersData ?? [];
   const sponsors: Sponsor[] = sponsorsData ?? [];
   const sales: Sale[] = salesData ?? [];
   const featuredEvents: EventRecord[] = featuredEventsData ?? [];
+  const galleryPhotos: GalleryPhoto[] = galleryData ?? [];
 
   const ekDate = process.env.EK_DATE ?? "2026-08-10T00:00:00+02:00";
 
@@ -200,12 +207,7 @@ export default async function HomePage() {
           <div>
             <PhotoGallery
               initialVisible={3}
-              photos={[
-                { src: "/groepsfotos/IMG_6011.jpeg", alt: "Sportac 86 Deinze — groepsfoto" },
-                { src: "/groepsfotos/IMG_6015.jpeg", alt: "Sportac 86 Deinze — groepsfoto" },
-                { src: "/groepsfotos/IMG_6016.jpeg", alt: "Sportac 86 Deinze — groepsfoto" },
-                { src: "/groepsfotos/IMG_6017.jpeg", alt: "Sportac 86 Deinze — groepsfoto" },
-              ]}
+              photos={galleryPhotos.map((p) => ({ src: p.image_url, alt: p.alt }))}
             />
           </div>
         </div>
