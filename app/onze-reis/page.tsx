@@ -56,8 +56,8 @@ export default function OnzeReisPage() {
           <p className="text-gray-body text-[15px] leading-relaxed mb-4">
             Sportac 86 Deinze is een club met een rijke traditie in ropeskipping. Al jaren
             trainen onze skippers hard om zich op het hoogste niveau te meten. Dit seizoen
-            hebben we iets uitzonderlijks bereikt: een kwalificatie voor het Europees
-            Kampioenschap Ropeskipping in Noorwegen.
+            werd dat terug beloond met een selectie voor het Europees Kampioenschap in
+            Noorwegen.
           </p>
           <p className="text-gray-body text-[15px] leading-relaxed mb-4">
             Het EK is de grootste ropeskippingcompetitie in Europa. Teams uit meer dan 30
