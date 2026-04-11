@@ -1,13 +1,28 @@
 "use server";
 
 import { createAdminClient } from "@/lib/supabase-admin";
+import { uploadGalleryImage } from "@/lib/storage";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
+async function resolveImageUrl(formData: FormData, fallback?: string): Promise<string | null> {
+  const file = formData.get("file");
+  if (file instanceof File && file.size > 0) {
+    return await uploadGalleryImage(file);
+  }
+  const urlField = ((formData.get("image_url") as string) || "").trim();
+  if (urlField) return urlField;
+  return fallback ?? null;
+}
+
 export async function createGalleryPhoto(formData: FormData) {
   const supabase = createAdminClient();
+
+  const image_url = await resolveImageUrl(formData);
+  if (!image_url) redirect("/admin/foto-gallerij/nieuw?error=missing-image");
+
   const { error } = await supabase.from("gallery_photos").insert({
-    image_url: (formData.get("image_url") as string).trim(),
+    image_url,
     alt: ((formData.get("alt") as string) || "").trim(),
     sort_order: parseInt(formData.get("sort_order") as string, 10) || 0,
     is_published: formData.get("is_published") === "on",
@@ -20,8 +35,18 @@ export async function createGalleryPhoto(formData: FormData) {
 
 export async function updateGalleryPhoto(id: string, formData: FormData) {
   const supabase = createAdminClient();
+
+  const { data: existing } = await supabase
+    .from("gallery_photos")
+    .select("image_url")
+    .eq("id", id)
+    .single();
+
+  const image_url = await resolveImageUrl(formData, existing?.image_url);
+  if (!image_url) redirect(`/admin/foto-gallerij/${id}?error=missing-image`);
+
   const { error } = await supabase.from("gallery_photos").update({
-    image_url: (formData.get("image_url") as string).trim(),
+    image_url,
     alt: ((formData.get("alt") as string) || "").trim(),
     sort_order: parseInt(formData.get("sort_order") as string, 10) || 0,
     is_published: formData.get("is_published") === "on",

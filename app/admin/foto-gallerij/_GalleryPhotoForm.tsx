@@ -10,17 +10,33 @@ export function GalleryPhotoForm({
   return (
     <form action={action} className="flex flex-col gap-5 max-w-xl">
       <div>
-        <label className="block text-sm font-semibold mb-1">Afbeelding URL *</label>
+        <label className="block text-sm font-semibold mb-1">Foto uploaden</label>
+        <input
+          type="file"
+          name="file"
+          accept="image/*"
+          className="w-full text-sm file:mr-3 file:rounded-sm file:border-0 file:bg-red-sportac file:px-4 file:py-2 file:text-white file:font-bold file:cursor-pointer hover:file:bg-red-600"
+        />
+        <p className="text-xs text-gray-sub mt-1">
+          Max 5&nbsp;MB. Upload vervangt de bestaande afbeelding wanneer je een foto bewerkt.
+        </p>
+      </div>
+
+      <div>
+        <label className="block text-sm font-semibold mb-1">
+          {photo ? "Huidige afbeelding URL" : "Of een externe URL"}
+        </label>
         <input
           type="text"
           name="image_url"
-          required
           defaultValue={photo?.image_url}
-          placeholder="/groepsfotos/IMG_6017.jpeg of https://..."
+          placeholder="https://... of /groepsfotos/..."
           className="w-full border border-[#e8e4df] rounded-sm px-3 py-2 text-sm focus:outline-none focus:border-red-sportac"
         />
         <p className="text-xs text-gray-sub mt-1">
-          Pad naar een bestand in <code>public/</code> of een volledige URL.
+          {photo
+            ? "Laat staan om de huidige foto te behouden, of vul een nieuwe URL in."
+            : "Alleen nodig als je geen bestand uploadt."}
         </p>
       </div>
 
