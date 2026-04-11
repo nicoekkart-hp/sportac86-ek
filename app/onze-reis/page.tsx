@@ -65,8 +65,7 @@ export default function OnzeReisPage() {
           </p>
           <p className="text-gray-body text-[15px] leading-relaxed">
             Maar de reis naar Noorwegen kost geld. Reiskosten, verblijf, wedstrijdmateriaal —
-            het telt op. Daarom rekenen we op de steun van onze gemeente, onze sponsors en
-            iedereen die ons een warm hart toedraagt.
+            het telt op. Daarom rekenen we op de steun van onze supporters.
           </p>
         </div>
 
@@ -79,26 +78,6 @@ export default function OnzeReisPage() {
             className="object-cover object-center"
             sizes="(max-width: 768px) 100vw, 768px"
           />
-        </div>
-
-        {/* EK facts */}
-        <div className="bg-white border border-[#e8e4df] rounded-sm p-8 mb-14">
-          <h3 className="font-bold text-lg mb-5">Het EK in cijfers</h3>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 text-center">
-            {[
-              { num: "2026", label: "Jaar" },
-              { num: "30+", label: "Landen" },
-              { num: "3", label: "Disciplines" },
-              { num: "🇳🇴", label: "Noorwegen" },
-            ].map((f) => (
-              <div key={f.label}>
-                <div className="font-condensed font-black italic text-4xl text-red-sportac leading-none mb-1">
-                  {f.num}
-                </div>
-                <div className="text-sm text-gray-sub">{f.label}</div>
-              </div>
-            ))}
-          </div>
         </div>
 
         {/* Timeline */}
