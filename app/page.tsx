@@ -101,12 +101,6 @@ export default async function HomePage() {
               >
                 Steun ons team
               </Link>
-              <Link
-                href="/onze-reis"
-                className="text-[15px] font-semibold text-gray-dark border-b-2 border-gray-dark pb-0.5 hover:text-red-sportac hover:border-red-sportac transition-colors"
-              >
-                Onze reis →
-              </Link>
             </div>
           </div>
 
