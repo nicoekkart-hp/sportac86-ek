@@ -206,7 +206,7 @@ export default async function HomePage() {
           {/* Right: photo gallery */}
           <div>
             <PhotoGallery
-              initialVisible={3}
+              initialVisible={9}
               photos={galleryPhotos.map((p) => ({ src: p.image_url, alt: p.alt }))}
             />
           </div>
