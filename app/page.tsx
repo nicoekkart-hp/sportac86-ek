@@ -155,12 +155,6 @@ export default async function HomePage() {
               In augustus 2026 komen de beste teams uit heel Europa samen in Melsomvik,
               Noorwegen voor de disciplines Freestyle en Speed.
             </p>
-            <p className="text-gray-body text-[15px] leading-relaxed mb-8">
-              De beloften van SPORTAC86 plaatsten zich begin 2026 via het Vlaams
-              Kampioenschap voor dit evenement — met maar liefst 7 gekwalificeerde skippers
-              een uitzonderlijke prestatie voor een club uit Deinze.
-            </p>
-
             {/* Key details */}
             <div className="border-t border-gray-200">
               {[
