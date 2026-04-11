@@ -30,7 +30,7 @@ export default async function TeamPage() {
             Het <em className="not-italic text-red-sportac">team</em>
           </h1>
           <p className="text-gray-sub text-[15px] max-w-lg leading-relaxed">
-            Maak kennis met de skippers, coaches en begeleiders die deze droom waarmaken.
+            Maak kennis met de skippers en coaches die deze droom waarmaken.
           </p>
         </div>
       </div>
