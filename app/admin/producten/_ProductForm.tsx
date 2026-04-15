@@ -41,6 +41,44 @@ export function ProductForm({
         </div>
       </div>
 
+      <fieldset className="border border-[#e8e4df] rounded-sm p-4">
+        <legend className="text-xs font-bold uppercase tracking-wider text-gray-sub px-2">
+          Volumekorting (optioneel)
+        </legend>
+        <p className="text-xs text-gray-sub mb-3">
+          Laat beide velden leeg voor geen kortingsprijs. Voorbeeld: 6 flessen voor €50,00.
+        </p>
+        <div className="grid sm:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-semibold mb-1">Pakketgrootte</label>
+            <input
+              type="number"
+              name="pack_size"
+              min={2}
+              defaultValue={product?.pack_size ?? ""}
+              placeholder="6"
+              className="w-full border border-[#e8e4df] rounded-sm px-3 py-2 text-sm focus:outline-none focus:border-red-sportac"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-semibold mb-1">Pakketprijs (€)</label>
+            <input
+              type="number"
+              name="pack_price_euros"
+              min={0}
+              step={0.01}
+              defaultValue={
+                product?.pack_price_cents != null
+                  ? (product.pack_price_cents / 100).toFixed(2)
+                  : ""
+              }
+              placeholder="50.00"
+              className="w-full border border-[#e8e4df] rounded-sm px-3 py-2 text-sm focus:outline-none focus:border-red-sportac"
+            />
+          </div>
+        </div>
+      </fieldset>
+
       <div>
         <label className="block text-sm font-semibold mb-1">Naam *</label>
         <input
