@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase-admin";
 import { Sale, Product, TeamMember } from "@/lib/types";
+import { formatPrice } from "@/lib/format";
 
 export default async function SaleDetailPage({
   params,
@@ -102,10 +103,17 @@ export default async function SaleDetailPage({
             {products.map((p: Product) => (
               <div key={p.id} className="flex items-center justify-between">
                 <label htmlFor={p.id} className="text-sm font-semibold">{p.name}</label>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-sub">
-                    €{(p.price_cents / 100).toFixed(2)}
-                  </span>
+                <div className="flex items-center gap-3">
+                  <div className="text-right">
+                    <div className="text-sm text-gray-sub">
+                      {formatPrice(p.price_cents)}
+                    </div>
+                    {p.pack_size != null && p.pack_price_cents != null && (
+                      <div className="text-xs text-gray-sub italic">
+                        of {formatPrice(p.pack_price_cents)} per {p.pack_size}
+                      </div>
+                    )}
+                  </div>
                   <input
                     id={p.id}
                     type="number"
