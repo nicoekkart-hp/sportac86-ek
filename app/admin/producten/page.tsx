@@ -34,7 +34,14 @@ export default async function ProductenPage() {
                 {p.sales && <span className="text-[10px] font-bold bg-gray-100 text-gray-sub px-1.5 py-0.5 rounded-sm">{p.sales.name}</span>}
                 {!p.is_active && <span className="text-[10px] font-bold bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded-sm">Inactief</span>}
               </div>
-              <p className="text-xs text-gray-sub mt-0.5">{formatPrice(p.price_cents)}</p>
+              <p className="text-xs text-gray-sub mt-0.5">
+                {formatPrice(p.price_cents)}
+                {p.pack_size != null && p.pack_price_cents != null && (
+                  <span className="ml-2 text-gray-sub/80">
+                    · {formatPrice(p.pack_price_cents)} per {p.pack_size}
+                  </span>
+                )}
+              </p>
             </div>
             <div className="flex items-center gap-2">
               <form action={toggleProductActive.bind(null, p.id, p.is_active)}>
