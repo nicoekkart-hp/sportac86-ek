@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";
 import { createAdminClient } from "@/lib/supabase-admin";
 import { Product } from "@/lib/types";
+import { calcLine } from "@/lib/pricing";
 
 export async function POST(req: NextRequest) {
   const formData = await req.formData();
@@ -56,16 +57,16 @@ export async function POST(req: NextRequest) {
   }
 
   // Build line items for Stripe
-  const lineItems = Object.entries(items).map(([productId, qty]) => {
+  const lineItems = Object.entries(items).flatMap(([productId, qty]) => {
     const product = productMap.get(productId)!;
-    return {
+    return calcLine(product, qty).stripeLines.map((l) => ({
       price_data: {
         currency: "eur",
-        product_data: { name: product.name },
-        unit_amount: product.price_cents,
+        product_data: { name: l.name },
+        unit_amount: l.unitAmount,
       },
-      quantity: qty,
-    };
+      quantity: l.quantity,
+    }));
   });
 
   const session = await stripe.checkout.sessions.create({
