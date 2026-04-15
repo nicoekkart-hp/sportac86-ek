@@ -98,6 +98,8 @@ export type Product = {
   sale_name?: string;
   name: string;
   price_cents: number;
+  pack_size: number | null;
+  pack_price_cents: number | null;
   is_active: boolean;
   sort_order: number;
   created_at: string;
