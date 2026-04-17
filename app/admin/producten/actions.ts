@@ -15,10 +15,11 @@ async function resolveImageUrl(formData: FormData): Promise<string | null> {
     const { error } = await supabase.storage
       .from(PRODUCT_PHOTO_BUCKET)
       .upload(path, file, { upsert: true, contentType: file.type });
-    if (!error) {
-      const { data } = supabase.storage.from(PRODUCT_PHOTO_BUCKET).getPublicUrl(path);
-      return data.publicUrl;
+    if (error) {
+      throw new Error(`image_upload_failed: ${error.message}`);
     }
+    const { data } = supabase.storage.from(PRODUCT_PHOTO_BUCKET).getPublicUrl(path);
+    return data.publicUrl;
   }
   const url = (formData.get("image_url") as string)?.trim();
   return url ? url : null;
@@ -30,13 +31,29 @@ function optionalString(raw: FormDataEntryValue | null): string | null {
 }
 
 export async function createProduct(formData: FormData) {
+  const sale_id = (formData.get("sale_id") as string)?.trim();
+  const name = (formData.get("name") as string)?.trim();
+  const priceRaw = (formData.get("price_euros") as string)?.trim();
+  const price_cents = priceRaw ? Math.round(parseFloat(priceRaw) * 100) : 0;
+
+  if (!sale_id || !name || !Number.isFinite(price_cents) || price_cents <= 0) {
+    redirect("/admin/producten?error=invalid");
+  }
+
+  let image_url: string | null;
+  try {
+    image_url = await resolveImageUrl(formData);
+  } catch {
+    redirect("/admin/producten?error=image_upload");
+  }
+
   const supabase = createAdminClient();
   const { error } = await supabase.from("products").insert({
-    sale_id: formData.get("sale_id") as string,
-    name: formData.get("name") as string,
-    price_cents: Math.round(parseFloat(formData.get("price_euros") as string) * 100),
+    sale_id,
+    name,
+    price_cents,
     pack_group_id: optionalString(formData.get("pack_group_id")),
-    image_url: await resolveImageUrl(formData),
+    image_url,
     description: optionalString(formData.get("description")),
     is_active: formData.get("is_active") === "on",
     sort_order: parseInt(formData.get("sort_order") as string, 10) || 0,
@@ -48,13 +65,29 @@ export async function createProduct(formData: FormData) {
 }
 
 export async function updateProduct(id: string, formData: FormData) {
+  const sale_id = (formData.get("sale_id") as string)?.trim();
+  const name = (formData.get("name") as string)?.trim();
+  const priceRaw = (formData.get("price_euros") as string)?.trim();
+  const price_cents = priceRaw ? Math.round(parseFloat(priceRaw) * 100) : 0;
+
+  if (!sale_id || !name || !Number.isFinite(price_cents) || price_cents <= 0) {
+    redirect(`/admin/producten/${id}?error=invalid`);
+  }
+
+  let image_url: string | null;
+  try {
+    image_url = await resolveImageUrl(formData);
+  } catch {
+    redirect("/admin/producten?error=image_upload");
+  }
+
   const supabase = createAdminClient();
   const { error } = await supabase.from("products").update({
-    sale_id: formData.get("sale_id") as string,
-    name: formData.get("name") as string,
-    price_cents: Math.round(parseFloat(formData.get("price_euros") as string) * 100),
+    sale_id,
+    name,
+    price_cents,
     pack_group_id: optionalString(formData.get("pack_group_id")),
-    image_url: await resolveImageUrl(formData),
+    image_url,
     description: optionalString(formData.get("description")),
     is_active: formData.get("is_active") === "on",
     sort_order: parseInt(formData.get("sort_order") as string, 10) || 0,
