@@ -98,9 +98,21 @@ export type Product = {
   sale_name?: string;
   name: string;
   price_cents: number;
-  pack_size: number | null;
-  pack_price_cents: number | null;
+  pack_group_id: string | null;
+  image_url: string | null;
+  description: string | null;
   is_active: boolean;
+  sort_order: number;
+  created_at: string;
+};
+
+export type PackGroup = {
+  id: string;
+  sale_id: string;
+  name: string;
+  unit_price_cents: number;
+  pack_size: number;
+  pack_price_cents: number;
   sort_order: number;
   created_at: string;
 };

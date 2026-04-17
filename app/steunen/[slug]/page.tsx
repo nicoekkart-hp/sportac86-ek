@@ -1,8 +1,10 @@
 import Link from "next/link";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase-admin";
-import { Sale, Product, TeamMember } from "@/lib/types";
+import { PackGroup, Product, Sale, TeamMember } from "@/lib/types";
 import { formatPrice } from "@/lib/format";
+import { ProductInfoModal } from "@/components/ProductInfoModal";
 
 export default async function SaleDetailPage({
   params,
@@ -27,21 +29,38 @@ export default async function SaleDetailPage({
 
   const sale = saleData as Sale;
 
-  const { data: productsData } = await supabase
-    .from("products")
-    .select("*")
-    .eq("sale_id", sale.id)
-    .eq("is_active", true)
-    .order("sort_order");
+  const [{ data: productsData }, { data: groupsData }, { data: membersData }] = await Promise.all([
+    supabase
+      .from("products")
+      .select("*")
+      .eq("sale_id", sale.id)
+      .eq("is_active", true)
+      .order("sort_order"),
+    supabase
+      .from("pack_groups")
+      .select("*")
+      .eq("sale_id", sale.id)
+      .order("sort_order"),
+    supabase.from("team_members").select("id, name").order("sort_order"),
+  ]);
 
   const products: Product[] = productsData ?? [];
-
-  const { data: membersData } = await supabase
-    .from("team_members")
-    .select("id, name")
-    .order("sort_order");
-
+  const packGroups: PackGroup[] = groupsData ?? [];
   const members: Pick<TeamMember, "id" | "name">[] = membersData ?? [];
+
+  const groupById = new Map(packGroups.map((g) => [g.id, g]));
+
+  const productsByGroup = new Map<string, Product[]>();
+  const ungrouped: Product[] = [];
+  for (const p of products) {
+    if (p.pack_group_id && groupById.has(p.pack_group_id)) {
+      const list = productsByGroup.get(p.pack_group_id) ?? [];
+      list.push(p);
+      productsByGroup.set(p.pack_group_id, list);
+    } else {
+      ungrouped.push(p);
+    }
+  }
 
   return (
     <div className="pt-16">
@@ -51,7 +70,6 @@ export default async function SaleDetailPage({
         </div>
       )}
 
-      {/* Hero */}
       <div className="bg-gray-dark py-14 px-6 relative overflow-hidden">
         <div className="max-w-5xl mx-auto relative">
           <div className="text-sm text-gray-sub mb-4">
@@ -73,7 +91,6 @@ export default async function SaleDetailPage({
         </div>
       </div>
 
-      {/* Order form */}
       <div className="max-w-5xl mx-auto px-6 py-14">
         {sale.coming_soon ? (
           <div className="bg-white border border-[#e8e4df] rounded-sm p-8 max-w-lg text-center">
@@ -95,37 +112,41 @@ export default async function SaleDetailPage({
             </Link>
           </div>
         ) : (
-        <div className="bg-white border border-[#e8e4df] rounded-sm p-8 max-w-lg">
-          <form action="/api/checkout/bestelling" method="POST" className="flex flex-col gap-4">
+        <div className="bg-white border border-[#e8e4df] rounded-sm p-8 max-w-2xl">
+          <form action="/api/checkout/bestelling" method="POST" className="flex flex-col gap-6">
             <input type="hidden" name="sale_id" value={sale.id} />
             <input type="hidden" name="sale_slug" value={sale.slug} />
 
-            {products.map((p: Product) => (
-              <div key={p.id} className="flex items-center justify-between">
-                <label htmlFor={p.id} className="text-sm font-semibold">{p.name}</label>
-                <div className="flex items-center gap-3">
-                  <div className="text-right">
-                    <div className="text-sm text-gray-sub">
-                      {formatPrice(p.price_cents)}
-                    </div>
-                    {p.pack_size != null && p.pack_price_cents != null && (
-                      <div className="text-xs text-gray-sub italic">
-                        of {formatPrice(p.pack_price_cents)} per {p.pack_size}
-                      </div>
-                    )}
-                  </div>
-                  <input
-                    id={p.id}
-                    type="number"
-                    name={`items.${p.id}`}
-                    min={0}
-                    max={99}
-                    defaultValue={0}
-                    className="w-16 border border-[#e8e4df] rounded-sm px-2 py-1 text-sm text-center focus:outline-none focus:border-red-sportac"
-                  />
-                </div>
-              </div>
-            ))}
+            {packGroups.map((g) => {
+              const groupProducts = productsByGroup.get(g.id) ?? [];
+              if (groupProducts.length === 0) return null;
+              return (
+                <section key={g.id} className="flex flex-col gap-3">
+                  <header className="border-b border-[#e8e4df] pb-2">
+                    <h3 className="font-condensed font-black italic text-xl text-gray-dark">{g.name}</h3>
+                    <p className="text-xs text-gray-sub">
+                      {formatPrice(g.unit_price_cents)} per fles · doos van {g.pack_size}: {formatPrice(g.pack_price_cents)} (mag mengen)
+                    </p>
+                  </header>
+                  {groupProducts.map((p) => (
+                    <ProductRow key={p.id} product={p} group={g} />
+                  ))}
+                </section>
+              );
+            })}
+
+            {ungrouped.length > 0 && (
+              <section className="flex flex-col gap-3">
+                {packGroups.length > 0 && (
+                  <header className="border-b border-[#e8e4df] pb-2">
+                    <h3 className="font-condensed font-black italic text-xl text-gray-dark">Overige producten</h3>
+                  </header>
+                )}
+                {ungrouped.map((p) => (
+                  <ProductRow key={p.id} product={p} group={null} />
+                ))}
+              </section>
+            )}
 
             {products.length === 0 && (
               <p className="text-sm text-gray-sub">Geen producten beschikbaar.</p>
@@ -187,6 +208,37 @@ export default async function SaleDetailPage({
         </div>
         )}
       </div>
+    </div>
+  );
+}
+
+function ProductRow({ product, group }: { product: Product; group: PackGroup | null }) {
+  const unitLabel = group ? formatPrice(group.unit_price_cents) : formatPrice(product.price_cents);
+  return (
+    <div className="flex items-center gap-3">
+      <div className="relative w-12 h-12 rounded-sm overflow-hidden bg-[#f5f3f0] flex-shrink-0">
+        {product.image_url && (
+          <Image src={product.image_url} alt="" fill className="object-cover" sizes="48px" />
+        )}
+      </div>
+      <div className="flex-1 min-w-0">
+        <label htmlFor={product.id} className="text-sm font-semibold block truncate">
+          {product.name}
+        </label>
+        <div className="flex items-center gap-2 text-xs text-gray-sub">
+          <span>{unitLabel}</span>
+          {product.description && <ProductInfoModal product={product} group={group} />}
+        </div>
+      </div>
+      <input
+        id={product.id}
+        type="number"
+        name={`items.${product.id}`}
+        min={0}
+        max={99}
+        defaultValue={0}
+        className="w-16 border border-[#e8e4df] rounded-sm px-2 py-1 text-sm text-center focus:outline-none focus:border-red-sportac"
+      />
     </div>
   );
 }

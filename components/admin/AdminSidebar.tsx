@@ -11,6 +11,7 @@ const navItems = [
   { href: "/admin/foto-gallerij", label: "Foto-gallerij", icon: "🖼️" },
   { href: "/admin/verkopen", label: "Verkopen", icon: "🏷️" },
   { href: "/admin/producten", label: "Producten", icon: "🛍️" },
+  { href: "/admin/pack-groepen", label: "Pack groepen", icon: "📦" },
   { href: "/admin/inschrijvingen", label: "Inschrijvingen", icon: "📋" },
   { href: "/admin/bestellingen", label: "Bestellingen", icon: "🛒" },
   { href: "/admin/donaties", label: "Donaties", icon: "💶" },

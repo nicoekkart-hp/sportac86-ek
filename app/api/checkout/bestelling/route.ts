@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";
 import { createAdminClient } from "@/lib/supabase-admin";
-import { Product } from "@/lib/types";
-import { calcLine } from "@/lib/pricing";
+import { PackGroup, Product } from "@/lib/types";
+import { calcCart } from "@/lib/pricing";
 
 export async function POST(req: NextRequest) {
   const formData = await req.formData();
@@ -19,21 +19,20 @@ export async function POST(req: NextRequest) {
 
   const supabase = createAdminClient();
 
-  // Fetch active products of this sale
-  const { data: products } = await supabase
-    .from("products")
-    .select("*")
-    .eq("sale_id", sale_id)
-    .eq("is_active", true);
+  const [{ data: productsData }, { data: groupsData }] = await Promise.all([
+    supabase.from("products").select("*").eq("sale_id", sale_id).eq("is_active", true),
+    supabase.from("pack_groups").select("*").eq("sale_id", sale_id),
+  ]);
 
-  const productMap = new Map((products ?? []).map((p: Product) => [p.id, p]));
+  const products: Product[] = productsData ?? [];
+  const groups: PackGroup[] = groupsData ?? [];
+  const productIds = new Set(products.map((p) => p.id));
 
-  // Build items map from form data
   const items: Record<string, number> = {};
   for (const [key, value] of formData.entries()) {
     if (key.startsWith("items.")) {
       const productId = key.slice("items.".length);
-      if (!productMap.has(productId)) continue;
+      if (!productIds.has(productId)) continue;
       const qty = parseInt(value as string, 10);
       if (!isNaN(qty) && qty > 0) items[productId] = qty;
     }
@@ -45,7 +44,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.redirect(new URL(`/steunen/${sale_slug}`, req.url));
   }
 
-  // Write pending order
+  const { stripeLines } = calcCart(products, groups, items);
+
+  if (stripeLines.length === 0) {
+    return NextResponse.redirect(new URL(`/steunen/${sale_slug}`, req.url));
+  }
+
   const { data: order, error: dbError } = await supabase
     .from("orders")
     .insert({ sale_id, name, email, phone, items, status: "new", payment_status: "pending", contact_member_id })
@@ -56,18 +60,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Database fout" }, { status: 500 });
   }
 
-  // Build line items for Stripe
-  const lineItems = Object.entries(items).flatMap(([productId, qty]) => {
-    const product = productMap.get(productId)!;
-    return calcLine(product, qty).stripeLines.map((l) => ({
-      price_data: {
-        currency: "eur",
-        product_data: { name: l.name },
-        unit_amount: l.unitAmount,
-      },
-      quantity: l.quantity,
-    }));
-  });
+  const lineItems = stripeLines.map((l) => ({
+    price_data: {
+      currency: "eur",
+      product_data: { name: l.name },
+      unit_amount: l.unitAmount,
+    },
+    quantity: l.quantity,
+  }));
 
   const session = await stripe.checkout.sessions.create({
     line_items: lineItems,

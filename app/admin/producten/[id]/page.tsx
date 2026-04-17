@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase-admin";
-import { Product, Sale } from "@/lib/types";
+import { PackGroup, Product, Sale } from "@/lib/types";
 import { ProductForm } from "../_ProductForm";
 import { updateProduct } from "../actions";
 
@@ -18,6 +18,14 @@ export default async function BewerkenProductPage({
   if (!productData) notFound();
   const product = productData as Product;
   const sales: Sale[] = salesData ?? [];
+
+  const { data: groupsData } = await supabase
+    .from("pack_groups")
+    .select("*")
+    .eq("sale_id", product.sale_id)
+    .order("sort_order");
+  const packGroups: PackGroup[] = groupsData ?? [];
+
   const action = updateProduct.bind(null, id);
 
   return (
@@ -26,7 +34,7 @@ export default async function BewerkenProductPage({
         <h1 className="font-condensed font-black italic text-4xl text-gray-dark">Product bewerken</h1>
         <p className="text-gray-sub text-sm mt-1">{product.name}</p>
       </div>
-      <ProductForm product={product} sales={sales} action={action} />
+      <ProductForm product={product} sales={sales} packGroups={packGroups} action={action} />
     </div>
   );
 }

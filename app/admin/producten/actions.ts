@@ -4,50 +4,40 @@ import { createAdminClient } from "@/lib/supabase-admin";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-function parsePackPricing(formData: FormData): {
-  pack_size: number | null;
-  pack_price_cents: number | null;
-  error: string | null;
-} {
-  const rawSize = (formData.get("pack_size") as string | null)?.trim() ?? "";
-  const rawPrice = (formData.get("pack_price_euros") as string | null)?.trim() ?? "";
+const PRODUCT_PHOTO_BUCKET = "product-photos";
 
-  if (rawSize === "" && rawPrice === "") {
-    return { pack_size: null, pack_price_cents: null, error: null };
+async function resolveImageUrl(formData: FormData): Promise<string | null> {
+  const file = formData.get("image_file") as File | null;
+  if (file && file.size > 0) {
+    const supabase = createAdminClient();
+    const ext = file.name.split(".").pop() ?? "jpg";
+    const path = `${Date.now()}.${ext}`;
+    const { error } = await supabase.storage
+      .from(PRODUCT_PHOTO_BUCKET)
+      .upload(path, file, { upsert: true, contentType: file.type });
+    if (!error) {
+      const { data } = supabase.storage.from(PRODUCT_PHOTO_BUCKET).getPublicUrl(path);
+      return data.publicUrl;
+    }
   }
-  if (rawSize === "" || rawPrice === "") {
-    return {
-      pack_size: null,
-      pack_price_cents: null,
-      error: "pack_incomplete",
-    };
-  }
+  const url = (formData.get("image_url") as string)?.trim();
+  return url ? url : null;
+}
 
-  const size = parseInt(rawSize, 10);
-  const priceCents = Math.round(parseFloat(rawPrice) * 100);
-
-  if (!Number.isFinite(size) || size < 2 || !Number.isFinite(priceCents) || priceCents <= 0) {
-    return {
-      pack_size: null,
-      pack_price_cents: null,
-      error: "pack_invalid",
-    };
-  }
-
-  return { pack_size: size, pack_price_cents: priceCents, error: null };
+function optionalString(raw: FormDataEntryValue | null): string | null {
+  const s = typeof raw === "string" ? raw.trim() : "";
+  return s ? s : null;
 }
 
 export async function createProduct(formData: FormData) {
-  const pack = parsePackPricing(formData);
-  if (pack.error) redirect(`/admin/producten?error=${pack.error}`);
-
   const supabase = createAdminClient();
   const { error } = await supabase.from("products").insert({
     sale_id: formData.get("sale_id") as string,
     name: formData.get("name") as string,
     price_cents: Math.round(parseFloat(formData.get("price_euros") as string) * 100),
-    pack_size: pack.pack_size,
-    pack_price_cents: pack.pack_price_cents,
+    pack_group_id: optionalString(formData.get("pack_group_id")),
+    image_url: await resolveImageUrl(formData),
+    description: optionalString(formData.get("description")),
     is_active: formData.get("is_active") === "on",
     sort_order: parseInt(formData.get("sort_order") as string, 10) || 0,
   });
@@ -58,16 +48,14 @@ export async function createProduct(formData: FormData) {
 }
 
 export async function updateProduct(id: string, formData: FormData) {
-  const pack = parsePackPricing(formData);
-  if (pack.error) redirect(`/admin/producten?error=${pack.error}`);
-
   const supabase = createAdminClient();
   const { error } = await supabase.from("products").update({
     sale_id: formData.get("sale_id") as string,
     name: formData.get("name") as string,
     price_cents: Math.round(parseFloat(formData.get("price_euros") as string) * 100),
-    pack_size: pack.pack_size,
-    pack_price_cents: pack.pack_price_cents,
+    pack_group_id: optionalString(formData.get("pack_group_id")),
+    image_url: await resolveImageUrl(formData),
+    description: optionalString(formData.get("description")),
     is_active: formData.get("is_active") === "on",
     sort_order: parseInt(formData.get("sort_order") as string, 10) || 0,
   }).eq("id", id);
