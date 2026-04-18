@@ -91,8 +91,15 @@ export default async function EventDetailPage({
       <div className="max-w-5xl mx-auto px-6 py-14 grid md:grid-cols-[1fr_380px] gap-12 items-start">
         <div>
           {ev.image_url && (
-            <div className="relative h-64 rounded-sm overflow-hidden mb-8 bg-[#c8c0b8]">
-              <Image src={ev.image_url} alt={ev.title} fill className="object-cover" sizes="(max-width: 768px) 100vw, 60vw" />
+            <div className="rounded-sm overflow-hidden mb-8 bg-[#c8c0b8]">
+              <Image
+                src={ev.image_url}
+                alt={ev.title}
+                width={1200}
+                height={800}
+                className="w-full h-auto"
+                sizes="(max-width: 768px) 100vw, 60vw"
+              />
             </div>
           )}
           <h2 className="font-bold text-xl mb-4">Over dit evenement</h2>
