@@ -75,11 +75,13 @@ export type Order = {
   phone: string;
   items: Record<string, number>;
   pickup_event_id: string | null;
+  pickup_slot_id: string | null;
   status: "new" | "handled";
   stripe_session_id: string | null;
   payment_status: "pending" | "paid" | "failed";
   contact_member_id: string | null;
   contact_member_name?: string;
+  pickup_slot_label?: string;
   is_delivered: boolean;
   created_at: string;
 };

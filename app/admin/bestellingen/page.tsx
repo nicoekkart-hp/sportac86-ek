@@ -5,13 +5,20 @@ import { toggleOrderStatus, togglePaymentStatus, toggleDelivered, deleteOrder } 
 type OrderRow = Order & {
   sales: { name: string } | null;
   team_members: { name: string } | null;
+  pickup_slot: { date: string } | null;
 };
+
+const FMT_PICKUP = new Intl.DateTimeFormat("nl-BE", { day: "numeric", month: "long" });
+function parseLocalDate(d: string) {
+  const [y, m, day] = d.split("-").map(Number);
+  return new Date(y, m - 1, day);
+}
 
 export default async function BestellingenPage() {
   const supabase = createAdminClient();
   const { data } = await supabase
     .from("orders")
-    .select("*, sales(name), team_members!contact_member_id(name)")
+    .select("*, sales(name), team_members!contact_member_id(name), pickup_slot:event_slots!pickup_slot_id(date)")
     .order("created_at", { ascending: false });
   const orders: OrderRow[] = data ?? [];
 
@@ -41,6 +48,11 @@ export default async function BestellingenPage() {
                 {o.status === "new" && (
                   <span className="text-[10px] font-bold bg-red-sportac/10 text-red-sportac px-1.5 py-0.5 rounded-sm">
                     Nieuw
+                  </span>
+                )}
+                {o.pickup_slot && (
+                  <span className="text-[10px] font-bold bg-purple-50 text-purple-700 px-1.5 py-0.5 rounded-sm">
+                    🍝 Eetfestijn {FMT_PICKUP.format(parseLocalDate(o.pickup_slot.date))}
                   </span>
                 )}
                 {o.team_members && (

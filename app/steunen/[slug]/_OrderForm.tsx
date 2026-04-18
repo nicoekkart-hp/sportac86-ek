@@ -2,10 +2,21 @@
 
 import Image from "next/image";
 import { useMemo, useState } from "react";
-import { PackGroup, Product, TeamMember } from "@/lib/types";
+import { EventSlot, PackGroup, Product, TeamMember } from "@/lib/types";
 import { formatPrice } from "@/lib/format";
 import { calcCart } from "@/lib/pricing";
 import { ProductInfoModal } from "@/components/ProductInfoModal";
+
+const FMT_PICKUP = new Intl.DateTimeFormat("nl-BE", {
+  weekday: "long",
+  day: "numeric",
+  month: "long",
+});
+
+function parseLocalDate(yyyyMmDd: string): Date {
+  const [y, m, d] = yyyyMmDd.split("-").map(Number);
+  return new Date(y, m - 1, d);
+}
 
 type Props = {
   saleId: string;
@@ -13,10 +24,16 @@ type Props = {
   products: Product[];
   packGroups: PackGroup[];
   members: Pick<TeamMember, "id" | "name">[];
+  pickupSlots: EventSlot[];
 };
 
-export function OrderForm({ saleId, saleSlug, products, packGroups, members }: Props) {
+type PickupChoice = string;
+const COURIER = "courier";
+
+export function OrderForm({ saleId, saleSlug, products, packGroups, members, pickupSlots }: Props) {
   const [qty, setQty] = useState<Record<string, number>>({});
+  const [pickup, setPickup] = useState<PickupChoice>(pickupSlots[0]?.id ?? COURIER);
+  const [contactMemberId, setContactMemberId] = useState<string>("");
 
   const groupById = useMemo(() => new Map(packGroups.map((g) => [g.id, g])), [packGroups]);
   const productsByGroup = useMemo(() => {
@@ -153,20 +170,57 @@ export function OrderForm({ saleId, saleSlug, products, packGroups, members }: P
       </div>
 
       <div>
-        <label className="block text-sm font-semibold mb-1">
-          Wie brengt jouw bestelling?{" "}
-          <span className="text-gray-sub font-normal">(optioneel)</span>
-        </label>
-        <select
-          name="contact_member_id"
-          defaultValue=""
-          className="w-full border border-[#e8e4df] rounded-sm px-3 py-2 text-sm focus:outline-none focus:border-red-sportac bg-white"
-        >
-          <option value="">— Geen voorkeur —</option>
-          {members.map((m) => (
-            <option key={m.id} value={m.id}>{m.name}</option>
+        <label className="block text-sm font-semibold mb-2">Hoe wil je je bestelling ontvangen? *</label>
+        <div className="flex flex-col gap-2">
+          {pickupSlots.map((s) => (
+            <label
+              key={s.id}
+              className={`flex items-center gap-3 border rounded-sm px-3 py-2 text-sm cursor-pointer ${pickup === s.id ? "border-red-sportac" : "border-[#e8e4df] hover:border-red-sportac"}`}
+            >
+              <input
+                type="radio"
+                name="pickup_choice"
+                value={s.id}
+                checked={pickup === s.id}
+                onChange={() => setPickup(s.id)}
+                className="accent-red-500"
+              />
+              <span>
+                Op het eetfestijn{" "}
+                <strong className="text-gray-dark">{FMT_PICKUP.format(parseLocalDate(s.date))}</strong>
+              </span>
+            </label>
           ))}
-        </select>
+          <label
+            className={`flex items-center gap-3 border rounded-sm px-3 py-2 text-sm cursor-pointer ${pickup === COURIER ? "border-red-sportac" : "border-[#e8e4df] hover:border-red-sportac"}`}
+          >
+            <input
+              type="radio"
+              name="pickup_choice"
+              value={COURIER}
+              checked={pickup === COURIER}
+              onChange={() => setPickup(COURIER)}
+              className="accent-red-500"
+            />
+            <span>Meegeven met een skipper of coach</span>
+          </label>
+        </div>
+        {pickup === COURIER && (
+          <div className="mt-3">
+            <label className="block text-sm font-semibold mb-1">Wie brengt jouw bestelling?</label>
+            <select
+              name="contact_member_id"
+              value={contactMemberId}
+              onChange={(e) => setContactMemberId(e.target.value)}
+              className="w-full border border-[#e8e4df] rounded-sm px-3 py-2 text-sm focus:outline-none focus:border-red-sportac bg-white"
+            >
+              <option value="">— Geen voorkeur —</option>
+              {members.map((m) => (
+                <option key={m.id} value={m.id}>{m.name}</option>
+              ))}
+            </select>
+          </div>
+        )}
       </div>
 
       <button

@@ -1,8 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase-admin";
-import { PackGroup, Product, Sale, TeamMember } from "@/lib/types";
+import { EventSlot, PackGroup, Product, Sale, TeamMember } from "@/lib/types";
 import { OrderForm } from "./_OrderForm";
+
+const PICKUP_EVENT_SLUG = "eetfestijn";
 
 export default async function SaleDetailPage({
   params,
@@ -27,7 +29,7 @@ export default async function SaleDetailPage({
 
   const sale = saleData as Sale;
 
-  const [{ data: productsData }, { data: groupsData }, { data: membersData }] = await Promise.all([
+  const [{ data: productsData }, { data: groupsData }, { data: membersData }, { data: pickupEventData }] = await Promise.all([
     supabase
       .from("products")
       .select("*")
@@ -40,11 +42,24 @@ export default async function SaleDetailPage({
       .eq("sale_id", sale.id)
       .order("sort_order"),
     supabase.from("team_members").select("id, name").order("sort_order"),
+    supabase.from("events").select("id").eq("slug", PICKUP_EVENT_SLUG).eq("is_published", true).maybeSingle(),
   ]);
 
   const products: Product[] = productsData ?? [];
   const packGroups: PackGroup[] = groupsData ?? [];
   const members: Pick<TeamMember, "id" | "name">[] = membersData ?? [];
+
+  let pickupSlots: EventSlot[] = [];
+  if (pickupEventData?.id) {
+    const today = new Date().toISOString().split("T")[0];
+    const { data: slotsData } = await supabase
+      .from("event_slots")
+      .select("*")
+      .eq("event_id", pickupEventData.id)
+      .gte("date", today)
+      .order("date");
+    pickupSlots = slotsData ?? [];
+  }
 
   return (
     <div className="pt-16">
@@ -103,6 +118,7 @@ export default async function SaleDetailPage({
               products={products}
               packGroups={packGroups}
               members={members}
+              pickupSlots={pickupSlots}
             />
           </div>
         )}
