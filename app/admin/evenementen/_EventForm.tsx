@@ -1,8 +1,26 @@
-import { EventRecord } from "@/lib/types";
+"use client";
 
-export function EventForm({ event, action }: { event?: EventRecord; action: (formData: FormData) => Promise<void> }) {
+import Image from "next/image";
+import { useState } from "react";
+import { EventRecord, EventSlot, EventTicket } from "@/lib/types";
+import { SlotsEditor } from "./_SlotsEditor";
+import { TicketsEditor } from "./_TicketsEditor";
+
+export function EventForm({
+  event,
+  slots,
+  tickets,
+  action,
+}: {
+  event?: EventRecord;
+  slots: EventSlot[];
+  tickets: EventTicket[];
+  action: (formData: FormData) => Promise<void>;
+}) {
+  const [preview, setPreview] = useState<string | null>(event?.image_url ?? null);
+
   return (
-    <form action={action} className="flex flex-col gap-5 max-w-2xl">
+    <form action={action} className="flex flex-col gap-5 max-w-2xl" encType="multipart/form-data">
       <div className="grid sm:grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-semibold mb-1">Titel *</label>
@@ -19,36 +37,46 @@ export function EventForm({ event, action }: { event?: EventRecord; action: (for
         <textarea name="description" required rows={4} defaultValue={event?.description} className="w-full border border-[#e8e4df] rounded-sm px-3 py-2 text-sm focus:outline-none focus:border-red-sportac resize-y" />
       </div>
 
-      <div className="grid sm:grid-cols-3 gap-4">
-        <div>
-          <label className="block text-sm font-semibold mb-1">Datum</label>
-          <input type="date" name="date" defaultValue={event?.date ?? ""} className="w-full border border-[#e8e4df] rounded-sm px-3 py-2 text-sm focus:outline-none focus:border-red-sportac" />
-          <p className="text-xs text-gray-sub mt-1">Leeglaten voor &ldquo;nog te bepalen&rdquo;.</p>
-        </div>
-        <div>
-          <label className="block text-sm font-semibold mb-1">Uur</label>
-          <input type="time" name="time" defaultValue={event?.time ?? ""} className="w-full border border-[#e8e4df] rounded-sm px-3 py-2 text-sm focus:outline-none focus:border-red-sportac" />
-        </div>
-        <div>
-          <label className="block text-sm font-semibold mb-1">Prijs (€)</label>
-          <input type="number" name="price_euros" min={0} step={0.01} defaultValue={event ? event.price_cents / 100 : 0} className="w-full border border-[#e8e4df] rounded-sm px-3 py-2 text-sm focus:outline-none focus:border-red-sportac" />
-        </div>
+      <div>
+        <label className="block text-sm font-semibold mb-1">Locatie</label>
+        <input type="text" name="location" defaultValue={event?.location} className="w-full border border-[#e8e4df] rounded-sm px-3 py-2 text-sm focus:outline-none focus:border-red-sportac" />
+        <p className="text-xs text-gray-sub mt-1">Standaardlocatie. Per datum kan je optioneel een andere locatie zetten.</p>
       </div>
 
-      <div className="grid sm:grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-semibold mb-1">Locatie</label>
-          <input type="text" name="location" defaultValue={event?.location} className="w-full border border-[#e8e4df] rounded-sm px-3 py-2 text-sm focus:outline-none focus:border-red-sportac" />
-        </div>
-        <div>
-          <label className="block text-sm font-semibold mb-1">Max. deelnemers</label>
-          <input type="number" name="max_attendees" min={1} defaultValue={event?.max_attendees ?? ""} placeholder="Leeglaten = onbeperkt" className="w-full border border-[#e8e4df] rounded-sm px-3 py-2 text-sm focus:outline-none focus:border-red-sportac" />
-        </div>
-      </div>
+      <SlotsEditor initial={slots} />
+
+      <TicketsEditor initial={tickets} />
 
       <div>
-        <label className="block text-sm font-semibold mb-1">Afbeelding URL</label>
-        <input type="url" name="image_url" defaultValue={event?.image_url ?? ""} placeholder="https://..." className="w-full border border-[#e8e4df] rounded-sm px-3 py-2 text-sm focus:outline-none focus:border-red-sportac" />
+        <label className="block text-sm font-semibold mb-2">Foto</label>
+        <div className="flex items-start gap-4">
+          {preview && (
+            <div className="relative w-32 h-20 rounded-sm overflow-hidden bg-[#ddd8d0] flex-shrink-0">
+              <Image src={preview} alt="Preview" fill className="object-cover" sizes="128px" />
+            </div>
+          )}
+          <div className="flex-1 flex flex-col gap-2">
+            <input
+              type="file"
+              name="image_file"
+              accept="image/*"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) setPreview(URL.createObjectURL(file));
+              }}
+              className="w-full text-sm text-gray-body file:mr-3 file:py-1.5 file:px-3 file:rounded-sm file:border-0 file:text-sm file:font-semibold file:bg-red-sportac file:text-white hover:file:bg-red-600 file:cursor-pointer"
+            />
+            <p className="text-xs text-gray-sub">Of gebruik een externe URL:</p>
+            <input
+              type="url"
+              name="image_url"
+              defaultValue={event?.image_url ?? ""}
+              placeholder="https://..."
+              className="w-full border border-[#e8e4df] rounded-sm px-3 py-2 text-sm focus:outline-none focus:border-red-sportac"
+              onChange={(e) => { if (e.target.value) setPreview(e.target.value); }}
+            />
+          </div>
+        </div>
       </div>
 
       <div className="flex items-center gap-2">
