@@ -3,16 +3,32 @@ export type EventRecord = {
   slug: string;
   title: string;
   description: string;
-  date: string | null;
-  time: string | null;
   location: string;
   image_url: string | null;
-  max_attendees: number | null;
-  price_cents: number;
   is_published: boolean;
   show_on_steunen: boolean;
   icon: string;
   coming_soon: boolean;
+  created_at: string;
+};
+
+export type EventSlot = {
+  id: string;
+  event_id: string;
+  date: string;            // YYYY-MM-DD
+  time: string | null;     // HH:MM:SS
+  location: string | null;
+  max_attendees: number | null;
+  sort_order: number;
+  created_at: string;
+};
+
+export type EventTicket = {
+  id: string;
+  event_id: string;
+  name: string;
+  price_cents: number;
+  sort_order: number;
   created_at: string;
 };
 
@@ -28,10 +44,12 @@ export type GalleryPhoto = {
 export type Registration = {
   id: string;
   event_id: string;
+  slot_id: string | null;
   name: string;
   email: string;
   num_persons: number;
   remarks: string | null;
+  tickets: Record<string, number> | null;
   stripe_session_id: string | null;
   payment_status: "pending" | "paid" | "failed";
   created_at: string;
