@@ -58,7 +58,7 @@ export function OrderForm({ saleId, saleSlug, products, packGroups, members }: P
             <header className="border-b border-[#e8e4df] pb-2">
               <h3 className="font-condensed font-black italic text-xl text-gray-dark">{g.name}</h3>
               <p className="text-xs text-gray-sub">
-                {formatPrice(g.unit_price_cents)} per fles · doos van {g.pack_size}: {formatPrice(g.pack_price_cents)} (mag mengen)
+                {formatPrice(g.unit_price_cents)} per fles · doos van {g.pack_size}: {formatPrice(g.pack_price_cents)}
               </p>
             </header>
             {groupProducts.map((p) => (
