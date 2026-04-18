@@ -33,7 +33,7 @@ export default async function HomePage() {
       .order("sort_order"),
   ]);
 
-  const teamMembers: TeamMember[] = teamMembersData ?? [];
+  const teamMembers: TeamMember[] = (teamMembersData ?? []).filter((m: TeamMember) => m.role === "Atleet");
   const sponsors: Sponsor[] = sponsorsData ?? [];
   const sales: Sale[] = salesData ?? [];
   const featuredEvents: EventRecord[] = featuredEventsData ?? [];
