@@ -33,12 +33,12 @@ export function ProductInfoModal({
         onClick={(e) => {
           if (e.target === ref.current) ref.current?.close();
         }}
-        className="backdrop:bg-black/40 rounded-sm max-w-lg w-[calc(100%-2rem)] p-0"
+        className="backdrop:bg-black/40 rounded-sm max-w-lg w-[calc(100%-2rem)] p-0 m-auto fixed inset-0"
       >
         <div className="flex flex-col">
           {product.image_url && (
             <div className="relative w-full aspect-[4/3] bg-[#f5f3f0]">
-              <Image src={product.image_url} alt={product.name} fill className="object-cover" sizes="(max-width: 640px) 100vw, 512px" />
+              <Image src={product.image_url} alt={product.name} fill className="object-contain" sizes="(max-width: 640px) 100vw, 512px" />
             </div>
           )}
           <div className="p-6 flex flex-col gap-3">
