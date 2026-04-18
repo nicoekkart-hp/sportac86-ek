@@ -25,6 +25,16 @@ export default async function BestellingenPage() {
   const newOrders = orders.filter((o) => o.status === "new");
   const handledOrders = orders.filter((o) => o.status === "handled");
 
+  const grouped = new Map<string, { name: string; orders: OrderRow[] }>();
+  for (const o of orders) {
+    const key = o.sale_id ?? "__none__";
+    const name = o.sales?.name ?? "Zonder verkoop";
+    const entry = grouped.get(key) ?? { name, orders: [] };
+    entry.orders.push(o);
+    grouped.set(key, entry);
+  }
+  const groups = Array.from(grouped.values()).sort((a, b) => a.name.localeCompare(b.name));
+
   return (
     <div className="p-8">
       <div className="mb-8">
@@ -34,17 +44,23 @@ export default async function BestellingenPage() {
 
       {orders.length === 0 && <p className="text-gray-sub text-sm">Nog geen bestellingen.</p>}
 
-      <div className="flex flex-col gap-3">
-        {orders.map((o) => (
+      {groups.map((group) => {
+        const groupNew = group.orders.filter((o) => o.status === "new").length;
+        return (
+          <div key={group.name} className="mb-8">
+            <div className="flex items-center gap-3 mb-3">
+              <h2 className="font-condensed font-black italic text-2xl text-gray-dark">{group.name}</h2>
+              <span className="text-xs text-gray-sub">
+                {group.orders.length} bestelling{group.orders.length !== 1 ? "en" : ""}
+                {groupNew > 0 ? ` · ${groupNew} nieuw` : ""}
+              </span>
+            </div>
+            <div className="flex flex-col gap-3">
+              {group.orders.map((o) => (
           <div key={o.id} className={`bg-white border rounded-sm p-4 flex items-start gap-4 ${o.status === "new" ? "border-red-sportac/40" : "border-[#e8e4df]"}`}>
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-1 flex-wrap">
                 <span className="font-semibold text-sm">{o.name}</span>
-                {o.sales && (
-                  <span className="text-[10px] font-bold bg-gray-100 text-gray-sub px-1.5 py-0.5 rounded-sm uppercase">
-                    {o.sales.name}
-                  </span>
-                )}
                 {o.status === "new" && (
                   <span className="text-[10px] font-bold bg-red-sportac/10 text-red-sportac px-1.5 py-0.5 rounded-sm">
                     Nieuw
@@ -148,8 +164,11 @@ export default async function BestellingenPage() {
               )}
             </div>
           </div>
-        ))}
-      </div>
+              ))}
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }
