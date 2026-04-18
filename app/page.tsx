@@ -25,7 +25,7 @@ export default async function HomePage() {
       .select("*")
       .eq("is_published", true)
       .eq("show_on_steunen", true)
-      .order("date", { ascending: true, nullsFirst: false }),
+      .order("created_at", { ascending: true }),
     supabase
       .from("gallery_photos")
       .select("*")
