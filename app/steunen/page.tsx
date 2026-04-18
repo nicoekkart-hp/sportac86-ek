@@ -22,7 +22,7 @@ export default async function SteunenPage() {
     .select("*")
     .eq("is_published", true)
     .eq("show_on_steunen", true)
-    .order("date");
+    .order("created_at", { ascending: true });
 
   const featuredEvents: EventRecord[] = eventsData ?? [];
 
