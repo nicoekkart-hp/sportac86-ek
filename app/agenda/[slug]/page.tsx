@@ -2,19 +2,21 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createServerClient } from "@/lib/supabase";
-import { EventRecord } from "@/lib/types";
-import { formatPrice } from "@/lib/format";
+import { EventRecord, EventSlot, EventTicket } from "@/lib/types";
+import { formatDateRange, latestSlotDate } from "@/lib/dates";
+import { RegistrationForm } from "./_RegistrationForm";
 
 export default async function EventDetailPage({
   params,
   searchParams,
 }: {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ betaald?: string }>;
+  searchParams: Promise<{ betaald?: string; ingeschreven?: string; error?: string }>;
 }) {
   const { slug } = await params;
-  const { betaald } = await searchParams;
+  const { betaald, ingeschreven, error } = await searchParams;
   const supabase = createServerClient();
+
   const { data: event } = await supabase
     .from("events")
     .select("*")
@@ -23,19 +25,27 @@ export default async function EventDetailPage({
     .single();
 
   if (!event) notFound();
-
   const ev = event as EventRecord;
-  const isPast = ev.date ? new Date(ev.date) < new Date() : false;
 
-  const { data: regData } = await supabase
-    .from("registrations")
-    .select("num_persons")
-    .eq("event_id", ev.id);
+  const [{ data: slotsData }, { data: ticketsData }, { data: regsData }] = await Promise.all([
+    supabase.from("event_slots").select("*").eq("event_id", ev.id).order("sort_order").order("date"),
+    supabase.from("event_tickets").select("*").eq("event_id", ev.id).order("sort_order"),
+    supabase.from("registrations").select("slot_id, num_persons").eq("event_id", ev.id),
+  ]);
 
-  const totalRegistered = (regData ?? []).reduce((sum, r) => sum + (r.num_persons ?? 1), 0);
-  const spotsLeft = ev.max_attendees !== null
-    ? Math.max(0, ev.max_attendees - totalRegistered)
-    : null;
+  const slots: EventSlot[] = slotsData ?? [];
+  const tickets: EventTicket[] = ticketsData ?? [];
+
+  const takenBySlot = new Map<string, number>();
+  for (const r of regsData ?? []) {
+    if (!r.slot_id) continue;
+    takenBySlot.set(r.slot_id, (takenBySlot.get(r.slot_id) ?? 0) + (r.num_persons ?? 1));
+  }
+  const slotsWithTaken = slots.map((s) => ({ ...s, taken: takenBySlot.get(s.id) ?? 0 }));
+
+  const latest = latestSlotDate(slots);
+  const today = new Date().toISOString().split("T")[0];
+  const isPast = latest !== null && latest < today;
 
   return (
     <div className="pt-16">
@@ -44,8 +54,17 @@ export default async function EventDetailPage({
           Inschrijving bevestigd! Je ontvangt een bevestiging per e-mail.
         </div>
       )}
+      {ingeschreven && (
+        <div className="bg-green-50 border-b border-green-200 px-6 py-3 text-center text-sm font-semibold text-green-800">
+          Inschrijving ontvangen! Je ontvangt een bevestiging per e-mail.
+        </div>
+      )}
+      {error === "volzet" && (
+        <div className="bg-red-50 border-b border-red-200 px-6 py-3 text-center text-sm font-semibold text-red-800">
+          Sorry, deze datum is intussen volzet. Kies een andere datum.
+        </div>
+      )}
 
-      {/* Page header */}
       <div className="bg-gray-dark py-14 px-6 relative overflow-hidden">
         <div className="max-w-5xl mx-auto relative">
           <div className="text-sm text-gray-sub mb-4">
@@ -55,152 +74,54 @@ export default async function EventDetailPage({
             {" / "}
             <span className="text-red-sportac">{ev.title}</span>
           </div>
-          <h1 className="font-condensed font-black italic text-5xl leading-none text-white mb-4 max-w-2xl">
-            {ev.title}
-          </h1>
+          <h1 className="font-condensed font-black italic text-5xl leading-none text-white mb-4 max-w-2xl">{ev.title}</h1>
           <div className="flex gap-6 flex-wrap">
             <span className="text-gray-sub text-sm flex items-center gap-1.5">
-              📅 <strong className="text-white">
-                {ev.date
-                  ? new Date(ev.date).toLocaleDateString("nl-BE", { weekday: "long", day: "numeric", month: "long", year: "numeric" })
-                  : "Datum nog te bepalen"}
-              </strong>
+              📅 <strong className="text-white">{formatDateRange(slots)}</strong>
             </span>
-            {ev.time && (
-              <span className="text-gray-sub text-sm flex items-center gap-1.5">
-                🕖 <strong className="text-white">{ev.time.slice(0, 5)}</strong>
-              </span>
-            )}
             {ev.location && (
               <span className="text-gray-sub text-sm flex items-center gap-1.5">
                 📍 <strong className="text-white">{ev.location}</strong>
               </span>
             )}
-            <span className="text-gray-sub text-sm flex items-center gap-1.5">
-              💶 <strong className="text-white">{formatPrice(ev.price_cents)}</strong> per persoon
-            </span>
           </div>
         </div>
       </div>
 
       <div className="max-w-5xl mx-auto px-6 py-14 grid md:grid-cols-[1fr_380px] gap-12 items-start">
-        {/* Left: description + image */}
         <div>
           {ev.image_url && (
             <div className="relative h-64 rounded-sm overflow-hidden mb-8 bg-[#c8c0b8]">
-              <Image
-                src={ev.image_url}
-                alt={ev.title}
-                fill
-                className="object-cover"
-                sizes="(max-width: 768px) 100vw, 60vw"
-              />
+              <Image src={ev.image_url} alt={ev.title} fill className="object-cover" sizes="(max-width: 768px) 100vw, 60vw" />
             </div>
           )}
           <h2 className="font-bold text-xl mb-4">Over dit evenement</h2>
-          <div className="text-gray-body text-[15px] leading-relaxed whitespace-pre-line">
-            {ev.description}
-          </div>
+          <div className="text-gray-body text-[15px] leading-relaxed whitespace-pre-line">{ev.description}</div>
         </div>
 
-        {/* Right: registration form */}
         <div id="inschrijven" className="bg-white border border-[#e8e4df] rounded-sm p-7 sticky top-24">
           {isPast ? (
-            <p className="text-gray-sub text-sm text-center py-4">
-              Dit evenement is voorbij.
-            </p>
+            <p className="text-gray-sub text-sm text-center py-4">Dit evenement is voorbij.</p>
           ) : ev.coming_soon ? (
             <div className="text-center py-4">
               <div className="text-4xl mb-3">⏳</div>
-              <p className="text-xs font-bold tracking-[0.2em] uppercase text-red-sportac mb-2">
-                Binnenkort beschikbaar
-              </p>
+              <p className="text-xs font-bold tracking-[0.2em] uppercase text-red-sportac mb-2">Binnenkort beschikbaar</p>
               <p className="text-sm text-gray-body leading-relaxed">
                 De details voor dit evenement worden nog uitgewerkt. Kom later terug voor meer info en inschrijvingen.
               </p>
             </div>
+          ) : slots.length === 0 ? (
+            <p className="text-gray-sub text-sm text-center py-4">Inschrijven nog niet beschikbaar.</p>
           ) : (
             <>
-              <h3 className="font-bold text-lg mb-1">Inschrijven</h3>
-              {spotsLeft !== null && (
-                <p className="text-sm text-gray-sub mb-5">
-                  Nog{" "}
-                  <strong className="text-red-sportac">{spotsLeft} plaatsen</strong>{" "}
-                  beschikbaar
-                </p>
-              )}
-              {spotsLeft === 0 ? (
-                <p className="text-sm text-red-sportac font-semibold">
-                  Volzet — geen plaatsen meer beschikbaar.
-                </p>
-              ) : (
-                <form
-                  action={ev.price_cents > 0 ? "/api/checkout/inschrijving" : "/api/registrations"}
-                  method="POST"
-                  className="flex flex-col gap-4"
-                >
-                  <input type="hidden" name="event_id" value={ev.id} />
-                  <div>
-                    <label className="block text-sm font-semibold mb-1">Naam *</label>
-                    <input
-                      type="text"
-                      name="name"
-                      required
-                      className="w-full border border-[#e8e4df] rounded-sm px-3 py-2 text-sm focus:outline-none focus:border-red-sportac"
-                      placeholder="Voor- en achternaam"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold mb-1">E-mailadres *</label>
-                    <input
-                      type="email"
-                      name="email"
-                      required
-                      className="w-full border border-[#e8e4df] rounded-sm px-3 py-2 text-sm focus:outline-none focus:border-red-sportac"
-                      placeholder="jouw@email.be"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold mb-1">Aantal personen *</label>
-                    <input
-                      type="number"
-                      name="num_persons"
-                      min={1}
-                      max={10}
-                      defaultValue={1}
-                      required
-                      className="w-full border border-[#e8e4df] rounded-sm px-3 py-2 text-sm focus:outline-none focus:border-red-sportac"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold mb-1">Opmerkingen</label>
-                    <textarea
-                      name="remarks"
-                      rows={3}
-                      className="w-full border border-[#e8e4df] rounded-sm px-3 py-2 text-sm focus:outline-none focus:border-red-sportac resize-none"
-                      placeholder="Dieetwensen, vragen, ..."
-                    />
-                  </div>
-                  <button
-                    type="submit"
-                    className="bg-red-sportac text-white font-bold py-3 rounded-sm hover:bg-red-600 transition-colors text-sm"
-                  >
-                    {ev.price_cents > 0
-                      ? `Inschrijven & betalen — ${formatPrice(ev.price_cents)}/pers`
-                      : `Inschrijven — ${formatPrice(ev.price_cents)}`}
-                  </button>
-                  {ev.price_cents > 0 && (
-                    <p className="text-xs text-gray-sub">
-                      Je wordt doorgestuurd naar de beveiligde betaalpagina van Stripe.
-                    </p>
-                  )}
-                  {ev.price_cents === 0 && (
-                    <p className="text-xs text-gray-sub">
-                      Je ontvangt een bevestiging per e-mail.
-                    </p>
-                  )}
-                </form>
-              )}
+              <h3 className="font-bold text-lg mb-4">Inschrijven</h3>
+              <RegistrationForm
+                eventId={ev.id}
+                eventSlug={ev.slug}
+                slots={slotsWithTaken}
+                tickets={tickets}
+                defaultLocation={ev.location}
+              />
             </>
           )}
         </div>
