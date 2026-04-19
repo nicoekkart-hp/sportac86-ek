@@ -89,8 +89,8 @@ export default async function SponsorsPage() {
           </p>
           <p className="text-gray-sub text-sm leading-relaxed mb-8 max-w-lg">
             Stuur een mail naar{" "}
-            <a href="mailto:sportacwkropeskipping@gmail.com" className="text-red-sportac hover:underline">
-              sportacwkropeskipping@gmail.com
+            <a href="mailto:sportac86ekropeskipping@gmail.com" className="text-red-sportac hover:underline">
+              sportac86ekropeskipping@gmail.com
             </a>{" "}
             met je gekozen pakket en het logo van je bedrijf, of gebruik het formulier hieronder.
           </p>
