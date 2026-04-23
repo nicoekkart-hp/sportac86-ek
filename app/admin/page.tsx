@@ -69,6 +69,12 @@ export default async function AdminDashboard() {
           <Link href="/admin/sponsors/nieuw" className="bg-gray-dark text-white font-bold text-sm px-5 py-2.5 rounded-sm hover:bg-black transition-colors">
             + Sponsor toevoegen
           </Link>
+          <a
+            href="/api/admin/export"
+            className="bg-green-700 text-white font-bold text-sm px-5 py-2.5 rounded-sm hover:bg-green-800 transition-colors"
+          >
+            ↓ Excel-export
+          </a>
         </div>
       </div>
     </div>
