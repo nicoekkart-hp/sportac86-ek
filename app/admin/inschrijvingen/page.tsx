@@ -1,5 +1,6 @@
 import { createAdminClient } from "@/lib/supabase-admin";
 import { EventRecord, EventSlot, EventTicket, Registration } from "@/lib/types";
+import { deleteRegistration } from "./actions";
 
 const FMT_DATE = new Intl.DateTimeFormat("nl-BE", { day: "numeric", month: "short", year: "numeric" });
 
@@ -59,6 +60,7 @@ export default async function InschrijvingenPage() {
                     <th className="text-left px-4 py-2.5 font-semibold">Opmerkingen</th>
                     <th className="text-left px-4 py-2.5 font-semibold">Betaling</th>
                     <th className="text-left px-4 py-2.5 font-semibold">Aangemaakt</th>
+                    <th className="text-right px-4 py-2.5 font-semibold"></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -84,6 +86,18 @@ export default async function InschrijvingenPage() {
                           {r.payment_status === "failed" && <span className="text-[10px] text-gray-sub">—</span>}
                         </td>
                         <td className="px-4 py-2.5 text-gray-sub text-xs">{new Date(r.created_at).toLocaleDateString("nl-BE")}</td>
+                        <td className="px-4 py-2.5 text-right">
+                          {r.payment_status === "pending" && (
+                            <form action={deleteRegistration.bind(null, r.id)}>
+                              <button
+                                type="submit"
+                                className="text-xs font-semibold px-2.5 py-1 rounded-sm border border-red-300 text-red-600 hover:bg-red-50 transition-colors"
+                              >
+                                Verwijderen
+                              </button>
+                            </form>
+                          )}
+                        </td>
                       </tr>
                     );
                   })}

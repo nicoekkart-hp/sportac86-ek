@@ -1,4 +1,5 @@
 import { createAdminClient } from "@/lib/supabase-admin";
+import { deleteSponsorRequest } from "./actions";
 
 type SponsorRequest = {
   id: string;
@@ -30,7 +31,17 @@ export default async function SponsorAanvragenPage() {
                 <div className="font-semibold text-sm text-gray-dark mb-0.5">{r.name}</div>
                 <a href={`mailto:${r.email}`} className="text-sm text-red-sportac hover:underline">{r.email}</a>
               </div>
-              <span className="text-xs text-gray-sub flex-shrink-0">{new Date(r.created_at).toLocaleDateString("nl-BE", { day: "numeric", month: "long", year: "numeric" })}</span>
+              <div className="flex items-center gap-3 flex-shrink-0">
+                <span className="text-xs text-gray-sub">{new Date(r.created_at).toLocaleDateString("nl-BE", { day: "numeric", month: "long", year: "numeric" })}</span>
+                <form action={deleteSponsorRequest.bind(null, r.id)}>
+                  <button
+                    type="submit"
+                    className="text-xs font-semibold px-2.5 py-1 rounded-sm border border-red-300 text-red-600 hover:bg-red-50 transition-colors"
+                  >
+                    Verwijderen
+                  </button>
+                </form>
+              </div>
             </div>
             {r.message && (
               <p className="text-sm text-gray-body mt-3 leading-relaxed border-t border-[#e8e4df] pt-3">{r.message}</p>
