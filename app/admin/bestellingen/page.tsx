@@ -16,11 +16,15 @@ function parseLocalDate(d: string) {
 
 export default async function BestellingenPage() {
   const supabase = createAdminClient();
-  const { data } = await supabase
-    .from("orders")
-    .select("*, sales(name), team_members!contact_member_id(name), pickup_slot:event_slots!pickup_slot_id(date)")
-    .order("created_at", { ascending: false });
+  const [{ data }, { data: products }] = await Promise.all([
+    supabase
+      .from("orders")
+      .select("*, sales(name), team_members!contact_member_id(name), pickup_slot:event_slots!pickup_slot_id(date)")
+      .order("created_at", { ascending: false }),
+    supabase.from("products").select("id, name"),
+  ]);
   const orders: OrderRow[] = data ?? [];
+  const productNames = new Map<string, string>((products ?? []).map((p: { id: string; name: string }) => [p.id, p.name]));
 
   const newOrders = orders.filter((o) => o.status === "new");
   const handledOrders = orders.filter((o) => o.status === "handled");
@@ -86,7 +90,7 @@ export default async function BestellingenPage() {
               <div className="flex flex-wrap gap-1.5 mt-1">
                 {Object.entries(o.items).map(([productId, qty]) => (
                   <span key={productId} className="text-[11px] bg-gray-100 px-2 py-0.5 rounded-sm">
-                    {productId} ×{qty}
+                    {productNames.get(productId) ?? "(verwijderd)"} ×{qty}
                   </span>
                 ))}
               </div>
