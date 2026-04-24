@@ -118,15 +118,10 @@ export default async function SteunenPage() {
           </h2>
           <div className="bg-white border border-[#e8e4df] rounded-sm p-8 max-w-lg">
             <p className="text-gray-body text-sm leading-relaxed mb-6">
-              Steun ons rechtstreeks via een veilige online betaling. Kies een bedrag of vul zelf in.
+              Elke bijdrage, groot of klein, brengt ons dichter bij Noorwegen. Doneren doe
+              je eenvoudig via een overschrijving op ons rekeningnummer.
             </p>
             <DonatieForm />
-            <div className="mt-6 bg-gray-warm rounded-sm p-4 font-mono text-sm">
-              <p className="text-xs font-sans text-gray-sub mb-2 not-italic">Of via overschrijving:</p>
-              <p><strong>BE89 0689 4858 8285</strong></p>
-              <p className="text-gray-sub">Sportac 86 Deinze</p>
-              <p className="text-gray-sub">Mededeling: EK Ropeskipping Noorwegen 2026</p>
-            </div>
           </div>
         </section>
       </div>

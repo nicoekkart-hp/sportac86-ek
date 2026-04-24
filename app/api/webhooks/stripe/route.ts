@@ -29,12 +29,7 @@ export async function POST(req: NextRequest) {
 
     const supabase = createAdminClient();
 
-    if (type === "donatie") {
-      await supabase
-        .from("donations")
-        .update({ payment_status: "paid", stripe_session_id: session.id })
-        .eq("id", record_id);
-    } else if (type === "bestelling") {
+    if (type === "bestelling") {
       await supabase
         .from("orders")
         .update({ payment_status: "paid", stripe_session_id: session.id })
