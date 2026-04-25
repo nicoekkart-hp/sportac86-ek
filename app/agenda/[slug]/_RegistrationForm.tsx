@@ -166,11 +166,13 @@ export function RegistrationForm({
           ? "Inschrijven"
           : totalCents === 0
             ? "Selecteer minstens één ticket"
-            : `Inschrijven & betalen · €${(totalCents / 100).toFixed(2).replace(".", ",")}`}
+            : `Inschrijven · €${(totalCents / 100).toFixed(2).replace(".", ",")}`}
       </button>
       {!isFree && (
-        <p className="text-xs text-gray-sub">
-          Je wordt doorgestuurd naar de beveiligde betaalpagina van Stripe.
+        <p className="text-xs text-gray-sub leading-relaxed">
+          Na bevestiging krijg je onze IBAN, het bedrag en een unieke mededeling. Je
+          betaalt via overschrijving — plaats wordt definitief zodra de betaling binnen
+          is.
         </p>
       )}
     </form>

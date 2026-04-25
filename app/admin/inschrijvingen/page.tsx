@@ -1,6 +1,6 @@
 import { createAdminClient } from "@/lib/supabase-admin";
 import { EventRecord, EventSlot, EventTicket, Registration } from "@/lib/types";
-import { deleteRegistration } from "./actions";
+import { deleteRegistration, togglePaymentStatus } from "./actions";
 
 const FMT_DATE = new Intl.DateTimeFormat("nl-BE", { day: "numeric", month: "short", year: "numeric" });
 
@@ -58,6 +58,7 @@ export default async function InschrijvingenPage() {
                     <th className="text-left px-4 py-2.5 font-semibold">Tickets</th>
                     <th className="text-left px-4 py-2.5 font-semibold">Personen</th>
                     <th className="text-left px-4 py-2.5 font-semibold">Opmerkingen</th>
+                    <th className="text-left px-4 py-2.5 font-semibold">Mededeling</th>
                     <th className="text-left px-4 py-2.5 font-semibold">Betaling</th>
                     <th className="text-left px-4 py-2.5 font-semibold">Aangemaakt</th>
                     <th className="text-right px-4 py-2.5 font-semibold"></th>
@@ -80,10 +81,25 @@ export default async function InschrijvingenPage() {
                         <td className="px-4 py-2.5 text-gray-sub text-xs">{breakdown}</td>
                         <td className="px-4 py-2.5">{r.num_persons}</td>
                         <td className="px-4 py-2.5 text-gray-sub text-xs">{r.remarks ?? "—"}</td>
+                        <td className="px-4 py-2.5 font-mono text-xs text-gray-dark">{r.payment_reference ?? "—"}</td>
                         <td className="px-4 py-2.5">
-                          {r.payment_status === "paid" && <span className="text-[10px] font-bold bg-green-100 text-green-700 px-1.5 py-0.5 rounded-sm">Betaald</span>}
-                          {r.payment_status === "pending" && <span className="text-[10px] font-bold bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded-sm">In afwachting</span>}
-                          {r.payment_status === "failed" && <span className="text-[10px] text-gray-sub">—</span>}
+                          {r.payment_status !== "failed" ? (
+                            <form action={togglePaymentStatus.bind(null, r.id, r.payment_status)}>
+                              <button
+                                type="submit"
+                                className={`text-[10px] font-bold px-1.5 py-0.5 rounded-sm transition-colors ${
+                                  r.payment_status === "paid"
+                                    ? "bg-green-100 text-green-700 hover:bg-green-200"
+                                    : "bg-yellow-100 text-yellow-700 hover:bg-yellow-200"
+                                }`}
+                                title={r.payment_status === "paid" ? "Klik om terug op in afwachting te zetten" : "Klik om als betaald te markeren"}
+                              >
+                                {r.payment_status === "paid" ? "✓ Betaald" : "Markeer als betaald"}
+                              </button>
+                            </form>
+                          ) : (
+                            <span className="text-[10px] text-gray-sub">—</span>
+                          )}
                         </td>
                         <td className="px-4 py-2.5 text-gray-sub text-xs">{new Date(r.created_at).toLocaleDateString("nl-BE")}</td>
                         <td className="px-4 py-2.5 text-right">

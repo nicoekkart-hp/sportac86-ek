@@ -114,12 +114,12 @@ export function OrderForm({ saleId, saleSlug, products, packGroups, members, pic
 
       <div className="bg-[#f5f3f0] border border-[#e8e4df] rounded-sm p-4 flex flex-col gap-2">
         <div className="text-xs font-bold tracking-[0.15em] uppercase text-gray-sub">Overzicht</div>
-        {cart.stripeLines.length === 0 ? (
+        {cart.lineItems.length === 0 ? (
           <p className="text-sm text-gray-sub">Voeg producten toe om de prijs te berekenen.</p>
         ) : (
           <>
             <ul className="flex flex-col gap-1 text-sm">
-              {cart.stripeLines.map((line, i) => (
+              {cart.lineItems.map((line, i) => (
                 <li key={i} className="flex justify-between gap-3">
                   <span className="text-gray-body">
                     {line.quantity}× {line.name}
@@ -229,9 +229,13 @@ export function OrderForm({ saleId, saleSlug, products, packGroups, members, pic
         className="bg-red-sportac text-white font-bold py-3 rounded-sm hover:bg-red-600 transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {cart.totalCents === 0
-          ? "Bestelling plaatsen & betalen"
-          : `Bestelling plaatsen & betalen · €${(cart.totalCents / 100).toFixed(2).replace(".", ",")}`}
+          ? "Bestelling plaatsen"
+          : `Bestelling plaatsen · €${(cart.totalCents / 100).toFixed(2).replace(".", ",")}`}
       </button>
+      <p className="text-xs text-gray-sub leading-relaxed">
+        Na bevestiging zie je onze IBAN, het bedrag en een unieke mededeling. Je betaalt
+        via overschrijving — een QR-code maakt het scannen met je banking-app makkelijk.
+      </p>
     </form>
   );
 }

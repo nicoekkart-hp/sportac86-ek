@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { stripe } from "@/lib/stripe";
 import { createAdminClient } from "@/lib/supabase-admin";
 import { PackGroup, Product } from "@/lib/types";
 import { calcCart } from "@/lib/pricing";
+import { generatePaymentReference } from "@/lib/payment";
+import { sendPaymentInstructions } from "@/lib/email";
 
 export async function POST(req: NextRequest) {
   const formData = await req.formData();
@@ -47,45 +48,59 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  const origin = req.headers.get("origin") ?? "http://localhost:3000";
-
   if (Object.keys(items).length === 0) {
-    return NextResponse.redirect(new URL(`/steunen/${sale_slug}`, req.url));
+    return NextResponse.redirect(new URL(`/steunen/${sale_slug}`, req.url), 303);
   }
 
-  const { stripeLines } = calcCart(products, groups, items);
+  const { lineItems, totalCents } = calcCart(products, groups, items);
 
-  if (stripeLines.length === 0) {
-    return NextResponse.redirect(new URL(`/steunen/${sale_slug}`, req.url));
+  if (lineItems.length === 0 || totalCents <= 0) {
+    return NextResponse.redirect(new URL(`/steunen/${sale_slug}`, req.url), 303);
   }
+
+  const payment_reference = generatePaymentReference("BEST");
 
   const { data: order, error: dbError } = await supabase
     .from("orders")
-    .insert({ sale_id, name, email, phone, items, status: "new", payment_status: "pending", contact_member_id, pickup_slot_id })
+    .insert({
+      sale_id,
+      name,
+      email,
+      phone,
+      items,
+      status: "new",
+      payment_status: "pending",
+      payment_reference,
+      contact_member_id,
+      pickup_slot_id,
+    })
     .select("id")
     .single();
 
   if (dbError || !order) {
+    console.error("Order insert error:", dbError);
     return NextResponse.json({ error: "Database fout" }, { status: 500 });
   }
 
-  const lineItems = stripeLines.map((l) => ({
-    price_data: {
-      currency: "eur",
-      product_data: { name: l.name },
-      unit_amount: l.unitAmount,
-    },
-    quantity: l.quantity,
-  }));
+  const itemSummary = lineItems
+    .map((l) => `${l.quantity}× ${l.name}`)
+    .join(", ");
 
-  const session = await stripe.checkout.sessions.create({
-    line_items: lineItems,
-    mode: "payment",
-    customer_email: email,
-    metadata: { type: "bestelling", record_id: order.id },
-    success_url: `${origin}/steunen/${sale_slug}?betaald=1`,
-    cancel_url: `${origin}/steunen/${sale_slug}`,
+  const { data: sale } = await supabase
+    .from("sales")
+    .select("name")
+    .eq("id", sale_id)
+    .single();
+
+  await sendPaymentInstructions({
+    to: email,
+    name,
+    reference: payment_reference,
+    totalCents,
+    kind: "order",
+    itemSummary,
+    contextLabel: sale?.name,
   });
 
-  return NextResponse.redirect(session.url!, 303);
+  return NextResponse.redirect(new URL(`/betaling/${payment_reference}`, req.url), 303);
 }

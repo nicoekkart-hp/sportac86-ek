@@ -50,7 +50,7 @@ export type Registration = {
   num_persons: number;
   remarks: string | null;
   tickets: Record<string, number> | null;
-  stripe_session_id: string | null;
+  payment_reference: string | null;
   payment_status: "pending" | "paid" | "failed";
   created_at: string;
 };
@@ -61,7 +61,6 @@ export type Donation = {
   email: string;
   amount_cents: number;
   message: string | null;
-  stripe_session_id: string | null;
   payment_status: "pending" | "paid" | "failed";
   created_at: string;
 };
@@ -77,7 +76,7 @@ export type Order = {
   pickup_event_id: string | null;
   pickup_slot_id: string | null;
   status: "new" | "handled";
-  stripe_session_id: string | null;
+  payment_reference: string | null;
   payment_status: "pending" | "paid" | "failed";
   contact_member_id: string | null;
   contact_member_name?: string;

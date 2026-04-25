@@ -87,6 +87,11 @@ export default async function BestellingenPage() {
                 )}
               </div>
               <p className="text-xs text-gray-sub mb-1">{o.email}{o.phone ? ` · ${o.phone}` : ""}</p>
+              {o.payment_reference && (
+                <p className="text-[11px] text-gray-sub mb-1">
+                  Mededeling: <span className="font-mono text-gray-dark">{o.payment_reference}</span>
+                </p>
+              )}
               <div className="flex flex-wrap gap-1.5 mt-1">
                 {Object.entries(o.items).map(([productId, qty]) => (
                   <span key={productId} className="text-[11px] bg-gray-100 px-2 py-0.5 rounded-sm">
@@ -130,8 +135,9 @@ export default async function BestellingenPage() {
                   <button
                     type="submit"
                     className="text-xs font-semibold px-3 py-1.5 rounded-sm border border-yellow-400 text-yellow-700 hover:bg-yellow-50 transition-colors"
+                    title="Klik om als betaald te markeren"
                   >
-                    In afwachting
+                    Markeer als betaald
                   </button>
                 </form>
               )}

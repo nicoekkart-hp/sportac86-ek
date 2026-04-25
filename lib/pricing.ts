@@ -1,13 +1,13 @@
 import { Product, PackGroup } from "@/lib/types";
 
-export type StripeLine = {
+export type LineItem = {
   name: string;
   unitAmount: number;
   quantity: number;
 };
 
 export type CartResult = {
-  stripeLines: StripeLine[];
+  lineItems: LineItem[];
   totalCents: number;
 };
 
@@ -19,7 +19,6 @@ export function calcCart(
   const productById = new Map(products.map((p) => [p.id, p]));
   const groupById = new Map(groups.map((g) => [g.id, g]));
 
-  // Sum quantities per group; track ungrouped separately.
   const qtyByGroup = new Map<string, number>();
   const ungrouped: Array<{ product: Product; qty: number }> = [];
 
@@ -38,10 +37,9 @@ export function calcCart(
     }
   }
 
-  const stripeLines: StripeLine[] = [];
+  const lineItems: LineItem[] = [];
   let totalCents = 0;
 
-  // Emit group lines in the group's sort_order, then by name for determinism.
   const orderedGroupIds = Array.from(qtyByGroup.keys()).sort((a, b) => {
     const ga = groupById.get(a)!;
     const gb = groupById.get(b)!;
@@ -56,7 +54,7 @@ export function calcCart(
     const singles = totalQty % group.pack_size;
 
     if (packs > 0) {
-      stripeLines.push({
+      lineItems.push({
         name: `${group.name} (doos van ${group.pack_size})`,
         unitAmount: group.pack_price_cents,
         quantity: packs,
@@ -64,7 +62,7 @@ export function calcCart(
       totalCents += packs * group.pack_price_cents;
     }
     if (singles > 0) {
-      stripeLines.push({
+      lineItems.push({
         name: group.name,
         unitAmount: group.unit_price_cents,
         quantity: singles,
@@ -73,9 +71,8 @@ export function calcCart(
     }
   }
 
-  // Ungrouped products keep their own per-product price.
   for (const { product, qty } of ungrouped) {
-    stripeLines.push({
+    lineItems.push({
       name: product.name,
       unitAmount: product.price_cents,
       quantity: qty,
@@ -83,5 +80,5 @@ export function calcCart(
     totalCents += qty * product.price_cents;
   }
 
-  return { stripeLines, totalCents };
+  return { lineItems, totalCents };
 }

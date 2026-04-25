@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { stripe } from "@/lib/stripe";
 import { createAdminClient } from "@/lib/supabase-admin";
 import { createServerClient } from "@/lib/supabase";
+import { generatePaymentReference } from "@/lib/payment";
+import { sendPaymentInstructions } from "@/lib/email";
 
 export async function POST(req: NextRequest) {
   const formData = await req.formData();
@@ -41,7 +42,6 @@ export async function POST(req: NextRequest) {
     .eq("event_id", event.id);
   const ticketById = new Map((tickets ?? []).map((t) => [t.id, t]));
 
-  // Parse tickets.{id}=qty
   const requested: { ticket_id: string; qty: number }[] = [];
   for (const [key, value] of formData.entries()) {
     const m = key.match(/^tickets\.([^.]+)$/);
@@ -58,7 +58,6 @@ export async function POST(req: NextRequest) {
 
   const totalPersons = requested.reduce((s, r) => s + r.qty, 0);
 
-  // Capacity guard
   if (slot.max_attendees !== null) {
     const { data: existing } = await supabase
       .from("registrations")
@@ -73,6 +72,8 @@ export async function POST(req: NextRequest) {
   const ticketsJson: Record<string, number> = {};
   for (const r of requested) ticketsJson[r.ticket_id] = r.qty;
 
+  const payment_reference = generatePaymentReference("INS");
+
   const adminSupabase = createAdminClient();
   const { data: registration, error: dbError } = await adminSupabase
     .from("registrations")
@@ -85,33 +86,32 @@ export async function POST(req: NextRequest) {
       remarks,
       tickets: ticketsJson,
       payment_status: "pending",
+      payment_reference,
     })
     .select("id")
     .single();
   if (dbError || !registration) {
+    console.error("Registration insert error:", dbError);
     return NextResponse.json({ error: "Database fout" }, { status: 500 });
   }
 
-  const origin = req.headers.get("origin") ?? new URL(req.url).origin;
+  const totalCents = requested.reduce((sum, r) => {
+    const t = ticketById.get(r.ticket_id)!;
+    return sum + t.price_cents * r.qty;
+  }, 0);
+  const itemSummary = requested
+    .map((r) => `${r.qty}× ${ticketById.get(r.ticket_id)!.name}`)
+    .join(", ");
 
-  const session = await stripe.checkout.sessions.create({
-    line_items: requested.map((r) => {
-      const t = ticketById.get(r.ticket_id)!;
-      return {
-        price_data: {
-          currency: "eur",
-          product_data: { name: `${event.title} — ${t.name}` },
-          unit_amount: t.price_cents,
-        },
-        quantity: r.qty,
-      };
-    }),
-    mode: "payment",
-    customer_email: email,
-    metadata: { type: "inschrijving", record_id: registration.id },
-    success_url: `${origin}/agenda/${event.slug}?betaald=1`,
-    cancel_url: `${origin}/agenda/${event.slug}#inschrijven`,
+  await sendPaymentInstructions({
+    to: email,
+    name,
+    reference: payment_reference,
+    totalCents,
+    kind: "registration",
+    itemSummary,
+    contextLabel: event.title,
   });
 
-  return NextResponse.redirect(session.url!, 303);
+  return NextResponse.redirect(new URL(`/betaling/${payment_reference}`, req.url), 303);
 }
