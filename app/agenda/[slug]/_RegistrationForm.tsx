@@ -38,6 +38,7 @@ export function RegistrationForm({
 
   const [slotId, setSlotId] = useState<string>(availableSlots[0]?.id ?? "");
   const [qty, setQty] = useState<Record<string, number>>({});
+  const [submitting, setSubmitting] = useState(false);
 
   const totalCents = useMemo(() => {
     if (isFree) return 0;
@@ -72,7 +73,18 @@ export function RegistrationForm({
   const action = isFree ? "/api/registrations" : "/api/checkout/inschrijving";
 
   return (
-    <form action={action} method="POST" className="flex flex-col gap-4">
+    <form
+      action={action}
+      method="POST"
+      className="flex flex-col gap-4"
+      onSubmit={(e) => {
+        if (submitting) {
+          e.preventDefault();
+          return;
+        }
+        setSubmitting(true);
+      }}
+    >
       <input type="hidden" name="event_id" value={eventId} />
       <input type="hidden" name="event_slug" value={eventSlug} />
 
@@ -159,14 +171,16 @@ export function RegistrationForm({
 
       <button
         type="submit"
-        disabled={!canSubmit}
+        disabled={!canSubmit || submitting}
         className="bg-red-sportac text-white font-bold py-3 rounded-sm hover:bg-red-600 transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        {isFree
-          ? "Inschrijven"
-          : totalCents === 0
-            ? "Selecteer minstens één ticket"
-            : `Inschrijven · €${(totalCents / 100).toFixed(2).replace(".", ",")}`}
+        {submitting
+          ? "Bezig met versturen…"
+          : isFree
+            ? "Inschrijven"
+            : totalCents === 0
+              ? "Selecteer minstens één ticket"
+              : `Inschrijven · €${(totalCents / 100).toFixed(2).replace(".", ",")}`}
       </button>
       {!isFree && (
         <p className="text-xs text-gray-sub leading-relaxed">

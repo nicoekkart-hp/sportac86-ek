@@ -12,6 +12,8 @@ import {
 
 export const dynamic = "force-dynamic";
 
+const CONTACT_EMAIL = process.env.EMAIL_REPLY_TO ?? "info@sportac86ek.be";
+
 type LookupResult =
   | {
       kind: "order";
@@ -213,7 +215,7 @@ export default async function BetalingPage({
           </p>
           <p>
             Niets ontvangen? Check je spam-folder of mail ons op{" "}
-            <a className="text-red-sportac hover:underline" href="mailto:info@sportac86ek.be">info@sportac86ek.be</a>.
+            <a className="text-red-sportac hover:underline" href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>.
           </p>
         </div>
 

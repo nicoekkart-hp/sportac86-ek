@@ -34,6 +34,7 @@ export function OrderForm({ saleId, saleSlug, products, packGroups, members, pic
   const [qty, setQty] = useState<Record<string, number>>({});
   const [pickup, setPickup] = useState<PickupChoice>(pickupSlots[0]?.id ?? COURIER);
   const [contactMemberId, setContactMemberId] = useState<string>("");
+  const [submitting, setSubmitting] = useState(false);
 
   const groupById = useMemo(() => new Map(packGroups.map((g) => [g.id, g])), [packGroups]);
   const productsByGroup = useMemo(() => {
@@ -63,7 +64,18 @@ export function OrderForm({ saleId, saleSlug, products, packGroups, members, pic
   };
 
   return (
-    <form action="/api/checkout/bestelling" method="POST" className="flex flex-col gap-6">
+    <form
+      action="/api/checkout/bestelling"
+      method="POST"
+      className="flex flex-col gap-6"
+      onSubmit={(e) => {
+        if (submitting) {
+          e.preventDefault();
+          return;
+        }
+        setSubmitting(true);
+      }}
+    >
       <input type="hidden" name="sale_id" value={saleId} />
       <input type="hidden" name="sale_slug" value={saleSlug} />
 
@@ -225,12 +237,14 @@ export function OrderForm({ saleId, saleSlug, products, packGroups, members, pic
 
       <button
         type="submit"
-        disabled={cart.totalCents === 0}
+        disabled={cart.totalCents === 0 || submitting}
         className="bg-red-sportac text-white font-bold py-3 rounded-sm hover:bg-red-600 transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        {cart.totalCents === 0
-          ? "Bestelling plaatsen"
-          : `Bestelling plaatsen · €${(cart.totalCents / 100).toFixed(2).replace(".", ",")}`}
+        {submitting
+          ? "Bezig met versturen…"
+          : cart.totalCents === 0
+            ? "Bestelling plaatsen"
+            : `Bestelling plaatsen · €${(cart.totalCents / 100).toFixed(2).replace(".", ",")}`}
       </button>
       <p className="text-xs text-gray-sub leading-relaxed">
         Na bevestiging zie je onze IBAN, het bedrag en een unieke mededeling. Je betaalt

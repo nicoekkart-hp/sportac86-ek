@@ -135,6 +135,119 @@ export async function sendPaymentInstructions(args: PaymentInstructionsArgs): Pr
   await send({ to: args.to, subject, html: layout({ title: "Bedankt voor je steun", bodyHtml }), text });
 }
 
+type LineItemForEmail = {
+  name: string;
+  quantity: number;
+  unitCents: number;
+};
+
+function renderLineItemsHtml(items: LineItemForEmail[], totalCents: number): string {
+  const rows = items
+    .map(
+      (l) => `<tr>
+        <td style="padding:6px 8px;border-bottom:1px solid #f0eee8;">${escape(l.name)}</td>
+        <td style="padding:6px 8px;border-bottom:1px solid #f0eee8;text-align:right;font-variant-numeric:tabular-nums;">${l.quantity}</td>
+        <td style="padding:6px 8px;border-bottom:1px solid #f0eee8;text-align:right;font-variant-numeric:tabular-nums;color:#888;">${formatAmountDisplay(l.unitCents)}</td>
+        <td style="padding:6px 8px;border-bottom:1px solid #f0eee8;text-align:right;font-variant-numeric:tabular-nums;">${formatAmountDisplay(l.unitCents * l.quantity)}</td>
+      </tr>`,
+    )
+    .join("");
+  return `<table cellpadding="0" cellspacing="0" style="width:100%;border:1px solid #e8e4df;border-radius:4px;font-size:13px;border-collapse:separate;border-spacing:0;">
+    <thead>
+      <tr style="background:#fafafa;color:#888;text-align:left;">
+        <th style="padding:6px 8px;font-weight:600;border-bottom:1px solid #e8e4df;">Item</th>
+        <th style="padding:6px 8px;font-weight:600;text-align:right;border-bottom:1px solid #e8e4df;">Aantal</th>
+        <th style="padding:6px 8px;font-weight:600;text-align:right;border-bottom:1px solid #e8e4df;">Stuk</th>
+        <th style="padding:6px 8px;font-weight:600;text-align:right;border-bottom:1px solid #e8e4df;">Subtotaal</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${rows}
+      <tr>
+        <td colspan="3" style="padding:8px;text-align:right;font-weight:bold;">Totaal</td>
+        <td style="padding:8px;text-align:right;font-weight:bold;font-variant-numeric:tabular-nums;">${formatAmountDisplay(totalCents)}</td>
+      </tr>
+    </tbody>
+  </table>`;
+}
+
+function renderLineItemsText(items: LineItemForEmail[], totalCents: number): string {
+  const lines = items.map(
+    (l) => `  ${l.quantity}× ${l.name} @ ${formatAmountDisplay(l.unitCents)} = ${formatAmountDisplay(l.unitCents * l.quantity)}`,
+  );
+  lines.push(`  Totaal: ${formatAmountDisplay(totalCents)}`);
+  return lines.join("\n");
+}
+
+type PaymentReminderArgs = {
+  to: string;
+  name: string;
+  reference: string;
+  totalCents: number;
+  kind: "order" | "registration";
+  contextLabel?: string;
+  lineItems: LineItemForEmail[];
+  reminderCount: number;
+};
+
+export async function sendPaymentReminder(args: PaymentReminderArgs): Promise<void> {
+  const amount = formatAmountDisplay(args.totalCents);
+  const link = `${siteUrl}/betaling/${args.reference}`;
+  const what = args.kind === "order" ? "bestelling" : "inschrijving";
+  const firstName = args.name.split(" ")[0];
+
+  const subject = `Kleine herinnering — betaling ${args.reference}`;
+
+  const lineItemsHtml = args.lineItems.length > 0 ? renderLineItemsHtml(args.lineItems, args.totalCents) : "";
+  const lineItemsText = args.lineItems.length > 0 ? renderLineItemsText(args.lineItems, args.totalCents) : `  Totaal: ${amount}`;
+
+  const bodyHtml = `
+    <p>Dag ${escape(firstName)},</p>
+    <p>Even een vriendelijke herinnering — we hebben je betaling voor je ${what}${args.kind === "order" && args.contextLabel ? ` uit onze <strong>${escape(args.contextLabel)}</strong>-actie` : args.kind === "registration" && args.contextLabel ? ` voor <strong>${escape(args.contextLabel)}</strong>` : ""} nog niet ontvangen. Geen zorgen, het overkomt iedereen weleens. Hieronder vind je de gegevens nog eens.</p>
+    ${lineItemsHtml ? `<div style="margin:16px 0;">${lineItemsHtml}</div>` : ""}
+    <table cellpadding="10" cellspacing="0" style="margin:16px 0;border:1px solid #e8e4df;border-radius:4px;width:100%;font-size:13px;">
+      <tr><td style="color:#888;width:160px;">Begunstigde</td><td>${escape(SPORTAC_BENEFICIARY)}</td></tr>
+      <tr><td style="color:#888;">IBAN</td><td style="font-family:monospace;">${escape(SPORTAC_IBAN_FORMATTED)}</td></tr>
+      <tr><td style="color:#888;">Bedrag</td><td><strong>${amount}</strong></td></tr>
+      <tr><td style="color:#888;">Mededeling</td><td><span style="font-family:monospace;background:#fff7e6;border:1px solid #f0d090;padding:2px 6px;border-radius:3px;">${escape(args.reference)}</span></td></tr>
+    </table>
+    <p style="color:#555;">Vergeet de mededeling niet — zo vinden we je betaling meteen terug.</p>
+    <p>Liever scannen? Open de QR-code:</p>
+    <p><a href="${escape(link)}" style="display:inline-block;background:#E9483B;color:#fff;text-decoration:none;padding:10px 18px;border-radius:3px;font-weight:bold;">QR-code openen</a></p>
+    <p style="color:#888;font-size:12px;">Of kopieer deze link: ${escape(link)}</p>
+    <p style="margin-top:24px;color:#555;">Heb je het ondertussen al overgeschreven? Dan kruisen onze mails elkaar — alvast bedankt en sorry voor de ruis!</p>
+    <p>Team Sportac 86</p>
+  `;
+
+  const text = [
+    `Dag ${firstName},`,
+    ``,
+    `Even een vriendelijke herinnering — we hebben je betaling voor je ${what}${args.kind === "order" && args.contextLabel ? ` uit onze ${args.contextLabel}-actie` : args.kind === "registration" && args.contextLabel ? ` voor ${args.contextLabel}` : ""} nog niet ontvangen. Geen zorgen, het overkomt iedereen weleens.`,
+    ``,
+    `Wat we voor je noteerden:`,
+    lineItemsText,
+    ``,
+    `Begunstigde: ${SPORTAC_BENEFICIARY}`,
+    `IBAN:        ${SPORTAC_IBAN_FORMATTED}`,
+    `Bedrag:      ${amount}`,
+    `Mededeling:  ${args.reference}`,
+    ``,
+    `Vergeet de mededeling niet — zo vinden we je betaling meteen terug.`,
+    ``,
+    `Liever scannen? Open de QR-code: ${link}`,
+    ``,
+    `Heb je het ondertussen al overgeschreven? Dan kruisen onze mails elkaar — alvast bedankt!`,
+    `Team Sportac 86`,
+  ].join("\n");
+
+  await send({
+    to: args.to,
+    subject,
+    html: layout({ title: "Kleine herinnering", bodyHtml }),
+    text,
+  });
+}
+
 type PaymentConfirmationArgs = {
   to: string;
   name: string;

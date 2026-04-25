@@ -1,12 +1,8 @@
 import { createAdminClient } from "@/lib/supabase-admin";
-import { Order } from "@/lib/types";
-import { toggleOrderStatus, togglePaymentStatus, toggleDelivered, deleteOrder } from "./actions";
-
-type OrderRow = Order & {
-  sales: { name: string } | null;
-  team_members: { name: string } | null;
-  pickup_slot: { date: string } | null;
-};
+import { calcCart } from "@/lib/pricing";
+import { ageBucket } from "@/lib/admin-display";
+import { PaymentKpiBar } from "@/components/admin/PaymentKpiBar";
+import { OrdersList, type OrderRow } from "./_OrdersList";
 
 const FMT_PICKUP = new Intl.DateTimeFormat("nl-BE", { day: "numeric", month: "long" });
 function parseLocalDate(d: string) {
@@ -14,171 +10,129 @@ function parseLocalDate(d: string) {
   return new Date(y, m - 1, day);
 }
 
+type RawOrder = {
+  id: string;
+  sale_id: string | null;
+  name: string;
+  email: string;
+  phone: string;
+  payment_status: "pending" | "paid" | "failed";
+  payment_reference: string | null;
+  items: Record<string, number> | null;
+  is_delivered: boolean;
+  last_reminder_at: string | null;
+  reminder_count: number;
+  created_at: string;
+  sales: { name: string } | null;
+  team_members: { name: string } | null;
+  pickup_slot: { date: string } | null;
+};
+
 export default async function BestellingenPage() {
   const supabase = createAdminClient();
-  const [{ data }, { data: products }] = await Promise.all([
+
+  const [{ data }, { data: products }, { data: groups }, { data: salesList }] = await Promise.all([
     supabase
       .from("orders")
       .select("*, sales(name), team_members!contact_member_id(name), pickup_slot:event_slots!pickup_slot_id(date)")
       .order("created_at", { ascending: false }),
-    supabase.from("products").select("id, name"),
+    supabase.from("products").select("*"),
+    supabase.from("pack_groups").select("*"),
+    supabase.from("sales").select("id, name").order("name"),
   ]);
-  const orders: OrderRow[] = data ?? [];
-  const productNames = new Map<string, string>((products ?? []).map((p: { id: string; name: string }) => [p.id, p.name]));
 
-  const newOrders = orders.filter((o) => o.status === "new");
-  const handledOrders = orders.filter((o) => o.status === "handled");
-
-  const grouped = new Map<string, { name: string; orders: OrderRow[] }>();
-  for (const o of orders) {
-    const key = o.sale_id ?? "__none__";
-    const name = o.sales?.name ?? "Zonder verkoop";
-    const entry = grouped.get(key) ?? { name, orders: [] };
-    entry.orders.push(o);
-    grouped.set(key, entry);
+  const productsBySale = new Map<string, typeof products>();
+  for (const p of products ?? []) {
+    const list = productsBySale.get(p.sale_id) ?? [];
+    list.push(p);
+    productsBySale.set(p.sale_id, list);
   }
-  const groups = Array.from(grouped.values()).sort((a, b) => a.name.localeCompare(b.name));
+  const groupsBySale = new Map<string, typeof groups>();
+  for (const g of groups ?? []) {
+    const list = groupsBySale.get(g.sale_id) ?? [];
+    list.push(g);
+    groupsBySale.set(g.sale_id, list);
+  }
+  const productNames = new Map<string, string>((products ?? []).map((p) => [p.id, p.name]));
+
+  const raw: RawOrder[] = (data as RawOrder[] | null) ?? [];
+
+  const orders: OrderRow[] = raw.map((o) => {
+    let totalCents = 0;
+    let itemSummary = "";
+    if (o.sale_id && o.items) {
+      const sp = productsBySale.get(o.sale_id) ?? [];
+      const sg = groupsBySale.get(o.sale_id) ?? [];
+      const cart = calcCart(sp, sg, o.items);
+      totalCents = cart.totalCents;
+      itemSummary = cart.lineItems
+        .map((l) => `${l.quantity}× ${l.name}`)
+        .join(", ");
+    } else if (o.items) {
+      itemSummary = Object.entries(o.items)
+        .map(([pid, qty]) => `${qty}× ${productNames.get(pid) ?? "(verwijderd)"}`)
+        .join(", ");
+    }
+    return {
+      id: o.id,
+      name: o.name,
+      email: o.email,
+      phone: o.phone,
+      paymentStatus: o.payment_status,
+      paymentReference: o.payment_reference,
+      totalCents,
+      itemSummary: itemSummary || "—",
+      saleId: o.sale_id,
+      saleName: o.sales?.name ?? "Zonder verkoop",
+      pickupLabel: o.pickup_slot
+        ? FMT_PICKUP.format(parseLocalDate(o.pickup_slot.date))
+        : null,
+      courierName: o.team_members?.name ?? null,
+      isDelivered: o.is_delivered,
+      createdAt: o.created_at,
+      lastReminderAt: o.last_reminder_at,
+      reminderCount: o.reminder_count ?? 0,
+    };
+  });
+
+  // KPI aggregates
+  let paidCents = 0;
+  let pendingCents = 0;
+  let pendingCount = 0;
+  let overdueCount = 0;
+  for (const o of orders) {
+    if (o.paymentStatus === "paid") paidCents += o.totalCents;
+    else if (o.paymentStatus === "pending") {
+      pendingCents += o.totalCents;
+      pendingCount += 1;
+      if (ageBucket(o.createdAt, o.paymentStatus) === "stale") overdueCount += 1;
+    }
+  }
 
   return (
     <div className="p-8">
-      <div className="mb-8">
-        <h1 className="font-condensed font-black italic text-4xl text-gray-dark">Bestellingen</h1>
-        <p className="text-gray-sub text-sm mt-1">{newOrders.length} nieuw · {handledOrders.length} afgehandeld</p>
+      <div className="mb-6 flex items-end justify-between gap-4 flex-wrap">
+        <div>
+          <h1 className="font-condensed font-black italic text-4xl text-gray-dark">Bestellingen</h1>
+          <p className="text-gray-sub text-sm mt-1">
+            Overzicht van alle bestellingen — openstaande betalingen staan bovenaan.
+          </p>
+        </div>
       </div>
 
-      {orders.length === 0 && <p className="text-gray-sub text-sm">Nog geen bestellingen.</p>}
+      <PaymentKpiBar
+        paidCents={paidCents}
+        pendingCents={pendingCents}
+        pendingCount={pendingCount}
+        overdueCount={overdueCount}
+        totalCount={orders.length}
+      />
 
-      {groups.map((group) => {
-        const groupNew = group.orders.filter((o) => o.status === "new").length;
-        return (
-          <div key={group.name} className="mb-8">
-            <div className="flex items-center gap-3 mb-3">
-              <h2 className="font-condensed font-black italic text-2xl text-gray-dark">{group.name}</h2>
-              <span className="text-xs text-gray-sub">
-                {group.orders.length} bestelling{group.orders.length !== 1 ? "en" : ""}
-                {groupNew > 0 ? ` · ${groupNew} nieuw` : ""}
-              </span>
-            </div>
-            <div className="flex flex-col gap-3">
-              {group.orders.map((o) => (
-          <div key={o.id} className={`bg-white border rounded-sm p-4 flex items-start gap-4 ${o.status === "new" ? "border-red-sportac/40" : "border-[#e8e4df]"}`}>
-            <div className="flex-1">
-              <div className="flex items-center gap-2 mb-1 flex-wrap">
-                <span className="font-semibold text-sm">{o.name}</span>
-                {o.status === "new" && (
-                  <span className="text-[10px] font-bold bg-red-sportac/10 text-red-sportac px-1.5 py-0.5 rounded-sm">
-                    Nieuw
-                  </span>
-                )}
-                {o.pickup_slot && (
-                  <span className="text-[10px] font-bold bg-purple-50 text-purple-700 px-1.5 py-0.5 rounded-sm">
-                    🍝 Eetfestijn {FMT_PICKUP.format(parseLocalDate(o.pickup_slot.date))}
-                  </span>
-                )}
-                {o.team_members && (
-                  <span className="text-[10px] font-bold bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded-sm">
-                    📦 {o.team_members.name}
-                  </span>
-                )}
-                {o.is_delivered && (
-                  <span className="text-[10px] font-bold bg-green-50 text-green-700 px-1.5 py-0.5 rounded-sm">
-                    Afgeleverd
-                  </span>
-                )}
-              </div>
-              <p className="text-xs text-gray-sub mb-1">{o.email}{o.phone ? ` · ${o.phone}` : ""}</p>
-              {o.payment_reference && (
-                <p className="text-[11px] text-gray-sub mb-1">
-                  Mededeling: <span className="font-mono text-gray-dark">{o.payment_reference}</span>
-                </p>
-              )}
-              <div className="flex flex-wrap gap-1.5 mt-1">
-                {Object.entries(o.items).map(([productId, qty]) => (
-                  <span key={productId} className="text-[11px] bg-gray-100 px-2 py-0.5 rounded-sm">
-                    {productNames.get(productId) ?? "(verwijderd)"} ×{qty}
-                  </span>
-                ))}
-              </div>
-              <p className="text-[11px] text-gray-sub mt-1.5">
-                {new Date(o.created_at).toLocaleDateString("nl-BE", { day: "numeric", month: "long", year: "numeric" })}
-              </p>
-            </div>
-
-            <div className="flex flex-col gap-2 items-end shrink-0">
-              {/* Order status toggle */}
-              <form action={toggleOrderStatus.bind(null, o.id, o.status)}>
-                <button
-                  type="submit"
-                  className={`text-xs font-semibold px-3 py-1.5 rounded-sm border transition-colors ${
-                    o.status === "new"
-                      ? "border-green-500 text-green-700 hover:bg-green-50"
-                      : "border-[#e8e4df] text-gray-sub hover:border-gray-400"
-                  }`}
-                >
-                  {o.status === "new" ? "✓ Afgehandeld" : "↩ Opnieuw openen"}
-                </button>
-              </form>
-
-              {/* Payment status toggle */}
-              {o.payment_status === "paid" && (
-                <form action={togglePaymentStatus.bind(null, o.id, o.payment_status)}>
-                  <button
-                    type="submit"
-                    className="text-xs font-semibold px-3 py-1.5 rounded-sm border border-green-500 text-green-700 hover:bg-green-50 transition-colors"
-                  >
-                    ✓ Betaald
-                  </button>
-                </form>
-              )}
-              {o.payment_status === "pending" && (
-                <form action={togglePaymentStatus.bind(null, o.id, o.payment_status)}>
-                  <button
-                    type="submit"
-                    className="text-xs font-semibold px-3 py-1.5 rounded-sm border border-yellow-400 text-yellow-700 hover:bg-yellow-50 transition-colors"
-                    title="Klik om als betaald te markeren"
-                  >
-                    Markeer als betaald
-                  </button>
-                </form>
-              )}
-              {o.payment_status === "failed" && (
-                <span className="text-[10px] font-bold bg-red-100 text-red-700 px-1.5 py-0.5 rounded-sm">
-                  Mislukt
-                </span>
-              )}
-
-              {/* Delivery toggle */}
-              <form action={toggleDelivered.bind(null, o.id, o.is_delivered)}>
-                <button
-                  type="submit"
-                  className={`text-xs font-semibold px-3 py-1.5 rounded-sm border transition-colors ${
-                    o.is_delivered
-                      ? "border-[#e8e4df] text-gray-sub hover:border-gray-400"
-                      : "border-blue-400 text-blue-700 hover:bg-blue-50"
-                  }`}
-                >
-                  {o.is_delivered ? "↩ Nog te leveren" : "✓ Afgeleverd"}
-                </button>
-              </form>
-
-              {/* Delete (only for unpaid orders) */}
-              {(o.payment_status === "pending" || o.payment_status === "failed") && (
-                <form action={deleteOrder.bind(null, o.id)}>
-                  <button
-                    type="submit"
-                    className="text-xs font-semibold px-3 py-1.5 rounded-sm border border-red-300 text-red-600 hover:bg-red-50 transition-colors"
-                  >
-                    Verwijderen
-                  </button>
-                </form>
-              )}
-            </div>
-          </div>
-              ))}
-            </div>
-          </div>
-        );
-      })}
+      {orders.length === 0 ? (
+        <p className="text-sm text-gray-sub">Nog geen bestellingen.</p>
+      ) : (
+        <OrdersList orders={orders} sales={salesList ?? []} overdueCount={overdueCount} />
+      )}
     </div>
   );
 }

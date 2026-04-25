@@ -72,9 +72,25 @@ export async function POST(req: NextRequest) {
   const ticketsJson: Record<string, number> = {};
   for (const r of requested) ticketsJson[r.ticket_id] = r.qty;
 
+  const adminSupabase = createAdminClient();
+
+  // Idempotency guard: same email + slot within last 60s -> reuse the existing registration.
+  const sixtySecondsAgo = new Date(Date.now() - 60_000).toISOString();
+  const { data: recent } = await adminSupabase
+    .from("registrations")
+    .select("id, payment_reference")
+    .eq("slot_id", slot.id)
+    .eq("email", email)
+    .gte("created_at", sixtySecondsAgo)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (recent?.payment_reference) {
+    return NextResponse.redirect(new URL(`/betaling/${recent.payment_reference}`, req.url), 303);
+  }
+
   const payment_reference = generatePaymentReference("INS");
 
-  const adminSupabase = createAdminClient();
   const { data: registration, error: dbError } = await adminSupabase
     .from("registrations")
     .insert({
@@ -103,7 +119,8 @@ export async function POST(req: NextRequest) {
     .map((r) => `${r.qty}× ${ticketById.get(r.ticket_id)!.name}`)
     .join(", ");
 
-  await sendPaymentInstructions({
+  // Fire-and-forget: don't block the redirect on Resend latency.
+  void sendPaymentInstructions({
     to: email,
     name,
     reference: payment_reference,

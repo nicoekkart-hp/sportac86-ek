@@ -52,6 +52,8 @@ export type Registration = {
   tickets: Record<string, number> | null;
   payment_reference: string | null;
   payment_status: "pending" | "paid" | "failed";
+  last_reminder_at: string | null;
+  reminder_count: number;
   created_at: string;
 };
 
@@ -78,6 +80,8 @@ export type Order = {
   status: "new" | "handled";
   payment_reference: string | null;
   payment_status: "pending" | "paid" | "failed";
+  last_reminder_at: string | null;
+  reminder_count: number;
   contact_member_id: string | null;
   contact_member_name?: string;
   pickup_slot_label?: string;

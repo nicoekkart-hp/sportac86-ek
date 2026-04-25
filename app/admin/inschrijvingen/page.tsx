@@ -1,128 +1,101 @@
 import { createAdminClient } from "@/lib/supabase-admin";
-import { EventRecord, EventSlot, EventTicket, Registration } from "@/lib/types";
-import { deleteRegistration, togglePaymentStatus } from "./actions";
-
-const FMT_DATE = new Intl.DateTimeFormat("nl-BE", { day: "numeric", month: "short", year: "numeric" });
-
-function parseLocalDate(d: string) {
-  const [y, m, day] = d.split("-").map(Number);
-  return new Date(y, m - 1, day);
-}
+import { ageBucket } from "@/lib/admin-display";
+import { PaymentKpiBar } from "@/components/admin/PaymentKpiBar";
+import { RegistrationsList, type RegRow } from "./_RegistrationsList";
+import type { EventRecord, EventSlot, EventTicket, Registration } from "@/lib/types";
 
 export default async function InschrijvingenPage() {
   const supabase = createAdminClient();
-  const [{ data: events }, { data: slots }, { data: tickets }, { data: registrations }] = await Promise.all([
-    supabase.from("events").select("*"),
-    supabase.from("event_slots").select("*"),
-    supabase.from("event_tickets").select("*"),
-    supabase.from("registrations").select("*").order("created_at", { ascending: false }),
-  ]);
+  const [{ data: events }, { data: slots }, { data: tickets }, { data: registrations }] =
+    await Promise.all([
+      supabase.from("events").select("*"),
+      supabase.from("event_slots").select("*"),
+      supabase.from("event_tickets").select("*"),
+      supabase.from("registrations").select("*").order("created_at", { ascending: false }),
+    ]);
 
   const eventsMap = new Map((events ?? []).map((e: EventRecord) => [e.id, e]));
   const slotsMap = new Map((slots ?? []).map((s: EventSlot) => [s.id, s]));
   const ticketsMap = new Map((tickets ?? []).map((t: EventTicket) => [t.id, t]));
   const allRegs: Registration[] = registrations ?? [];
 
-  const grouped = new Map<string, Registration[]>();
-  for (const reg of allRegs) {
-    const list = grouped.get(reg.event_id) ?? [];
-    list.push(reg);
-    grouped.set(reg.event_id, list);
+  const rows: RegRow[] = allRegs.map((r) => {
+    let totalCents = 0;
+    let ticketSummary = "—";
+    if (r.tickets) {
+      const parts: string[] = [];
+      for (const [tid, qty] of Object.entries(r.tickets)) {
+        if (qty <= 0) continue;
+        const t = ticketsMap.get(tid);
+        if (!t) {
+          parts.push(`${qty}× (verwijderd)`);
+          continue;
+        }
+        totalCents += t.price_cents * qty;
+        parts.push(`${qty}× ${t.name}`);
+      }
+      if (parts.length > 0) ticketSummary = parts.join(", ");
+    }
+    const slot = r.slot_id ? slotsMap.get(r.slot_id) : null;
+    const ev = eventsMap.get(r.event_id);
+    return {
+      id: r.id,
+      name: r.name,
+      email: r.email,
+      numPersons: r.num_persons,
+      remarks: r.remarks,
+      paymentStatus: r.payment_status,
+      paymentReference: r.payment_reference,
+      totalCents,
+      ticketSummary,
+      eventId: r.event_id,
+      eventTitle: ev?.title ?? "Onbekend evenement",
+      slotDate: slot?.date ?? null,
+      createdAt: r.created_at,
+      lastReminderAt: r.last_reminder_at,
+      reminderCount: r.reminder_count ?? 0,
+    };
+  });
+
+  let paidCents = 0;
+  let pendingCents = 0;
+  let pendingCount = 0;
+  let overdueCount = 0;
+  for (const r of rows) {
+    if (r.paymentStatus === "paid") paidCents += r.totalCents;
+    else if (r.paymentStatus === "pending" && r.totalCents > 0) {
+      pendingCents += r.totalCents;
+      pendingCount += 1;
+      if (ageBucket(r.createdAt, r.paymentStatus) === "stale") overdueCount += 1;
+    }
   }
+
+  const eventOptions = Array.from(eventsMap.values())
+    .map((e) => ({ id: e.id, title: e.title }))
+    .sort((a, b) => a.title.localeCompare(b.title));
 
   return (
     <div className="p-8">
-      <div className="mb-8">
+      <div className="mb-6">
         <h1 className="font-condensed font-black italic text-4xl text-gray-dark">Inschrijvingen</h1>
-        <p className="text-gray-sub text-sm mt-1">{allRegs.length} totaal</p>
+        <p className="text-gray-sub text-sm mt-1">
+          Overzicht van alle inschrijvingen — openstaande betalingen staan bovenaan.
+        </p>
       </div>
 
-      {allRegs.length === 0 && <p className="text-gray-sub text-sm">Nog geen inschrijvingen.</p>}
+      <PaymentKpiBar
+        paidCents={paidCents}
+        pendingCents={pendingCents}
+        pendingCount={pendingCount}
+        overdueCount={overdueCount}
+        totalCount={rows.length}
+      />
 
-      {Array.from(grouped.entries()).map(([eventId, regs]) => {
-        const ev = eventsMap.get(eventId);
-        const totalPersons = regs.reduce((sum, r) => sum + r.num_persons, 0);
-        return (
-          <div key={eventId} className="mb-8">
-            <div className="flex items-center gap-3 mb-3">
-              <h2 className="font-bold text-base text-gray-dark">{ev?.title ?? "Onbekend evenement"}</h2>
-              <span className="text-xs text-gray-sub">{regs.length} inschrijvingen · {totalPersons} personen</span>
-            </div>
-            <div className="bg-white border border-[#e8e4df] rounded-sm overflow-hidden">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-[#e8e4df] text-xs text-gray-sub">
-                    <th className="text-left px-4 py-2.5 font-semibold">Naam</th>
-                    <th className="text-left px-4 py-2.5 font-semibold">E-mail</th>
-                    <th className="text-left px-4 py-2.5 font-semibold">Datum</th>
-                    <th className="text-left px-4 py-2.5 font-semibold">Tickets</th>
-                    <th className="text-left px-4 py-2.5 font-semibold">Personen</th>
-                    <th className="text-left px-4 py-2.5 font-semibold">Opmerkingen</th>
-                    <th className="text-left px-4 py-2.5 font-semibold">Mededeling</th>
-                    <th className="text-left px-4 py-2.5 font-semibold">Betaling</th>
-                    <th className="text-left px-4 py-2.5 font-semibold">Aangemaakt</th>
-                    <th className="text-right px-4 py-2.5 font-semibold"></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {regs.map((r) => {
-                    const slot = r.slot_id ? slotsMap.get(r.slot_id) : null;
-                    const breakdown = r.tickets
-                      ? Object.entries(r.tickets)
-                          .filter(([, qty]) => qty > 0)
-                          .map(([id, qty]) => `${qty}× ${ticketsMap.get(id)?.name ?? "(verwijderd)"}`)
-                          .join(", ")
-                      : "—";
-                    return (
-                      <tr key={r.id} className="border-b border-[#e8e4df] last:border-0 hover:bg-gray-50">
-                        <td className="px-4 py-2.5 font-medium">{r.name}</td>
-                        <td className="px-4 py-2.5 text-gray-sub">{r.email}</td>
-                        <td className="px-4 py-2.5 text-gray-sub">{slot ? FMT_DATE.format(parseLocalDate(slot.date)) : "—"}</td>
-                        <td className="px-4 py-2.5 text-gray-sub text-xs">{breakdown}</td>
-                        <td className="px-4 py-2.5">{r.num_persons}</td>
-                        <td className="px-4 py-2.5 text-gray-sub text-xs">{r.remarks ?? "—"}</td>
-                        <td className="px-4 py-2.5 font-mono text-xs text-gray-dark">{r.payment_reference ?? "—"}</td>
-                        <td className="px-4 py-2.5">
-                          {r.payment_status !== "failed" ? (
-                            <form action={togglePaymentStatus.bind(null, r.id, r.payment_status)}>
-                              <button
-                                type="submit"
-                                className={`text-[10px] font-bold px-1.5 py-0.5 rounded-sm transition-colors ${
-                                  r.payment_status === "paid"
-                                    ? "bg-green-100 text-green-700 hover:bg-green-200"
-                                    : "bg-yellow-100 text-yellow-700 hover:bg-yellow-200"
-                                }`}
-                                title={r.payment_status === "paid" ? "Klik om terug op in afwachting te zetten" : "Klik om als betaald te markeren"}
-                              >
-                                {r.payment_status === "paid" ? "✓ Betaald" : "Markeer als betaald"}
-                              </button>
-                            </form>
-                          ) : (
-                            <span className="text-[10px] text-gray-sub">—</span>
-                          )}
-                        </td>
-                        <td className="px-4 py-2.5 text-gray-sub text-xs">{new Date(r.created_at).toLocaleDateString("nl-BE")}</td>
-                        <td className="px-4 py-2.5 text-right">
-                          {r.payment_status === "pending" && (
-                            <form action={deleteRegistration.bind(null, r.id)}>
-                              <button
-                                type="submit"
-                                className="text-xs font-semibold px-2.5 py-1 rounded-sm border border-red-300 text-red-600 hover:bg-red-50 transition-colors"
-                              >
-                                Verwijderen
-                              </button>
-                            </form>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        );
-      })}
+      {rows.length === 0 ? (
+        <p className="text-sm text-gray-sub">Nog geen inschrijvingen.</p>
+      ) : (
+        <RegistrationsList rows={rows} events={eventOptions} overdueCount={overdueCount} />
+      )}
     </div>
   );
 }

@@ -58,6 +58,22 @@ export async function POST(req: NextRequest) {
     return NextResponse.redirect(new URL(`/steunen/${sale_slug}`, req.url), 303);
   }
 
+  // Idempotency guard: same email + sale within last 60s -> reuse the existing order.
+  // Catches double-submits, refreshes, and impatient retries.
+  const sixtySecondsAgo = new Date(Date.now() - 60_000).toISOString();
+  const { data: recent } = await supabase
+    .from("orders")
+    .select("id, payment_reference")
+    .eq("sale_id", sale_id)
+    .eq("email", email)
+    .gte("created_at", sixtySecondsAgo)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (recent?.payment_reference) {
+    return NextResponse.redirect(new URL(`/betaling/${recent.payment_reference}`, req.url), 303);
+  }
+
   const payment_reference = generatePaymentReference("BEST");
 
   const { data: order, error: dbError } = await supabase
@@ -92,7 +108,9 @@ export async function POST(req: NextRequest) {
     .eq("id", sale_id)
     .single();
 
-  await sendPaymentInstructions({
+  // Fire-and-forget: don't block the redirect on Resend latency.
+  // sendPaymentInstructions catches and logs its own errors.
+  void sendPaymentInstructions({
     to: email,
     name,
     reference: payment_reference,
