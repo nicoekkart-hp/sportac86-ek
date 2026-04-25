@@ -11,6 +11,17 @@ const levels = [
   { id: "partner", label: "Partner", description: "Vermelding op sponsorspagina" },
 ] as const;
 
+type Perk = { label: string; gold: boolean | string; silver: boolean | string };
+
+const perks: Perk[] = [
+  { label: "Logo of naam prominent op website", gold: true, silver: true },
+  { label: "Logo of naam op sponsorpagina website", gold: true, silver: true },
+  { label: "Projectiescherm tijdens eetfestijn", gold: true, silver: true },
+  { label: "Vermelding in mail en op social media", gold: true, silver: true },
+  { label: "Vermelding op placemats eetfestijn", gold: true, silver: false },
+  { label: "Tickets eetfestijn", gold: "2 tickets", silver: false },
+];
+
 export default async function SponsorsPage() {
   const supabase = createServerClient();
   const { data } = await supabase
@@ -96,13 +107,41 @@ export default async function SponsorsPage() {
           </p>
 
           {/* Packages */}
-          <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-3 mb-10">
-            {levels.map((level) => (
-              <div key={level.id} className="bg-white/5 border border-white/10 rounded-sm p-4">
-                <div className="font-bold text-white mb-1">{level.label}</div>
-                <div className="text-xs text-gray-sub">{level.description}</div>
+          <div className="mb-10">
+            <h3 className="font-condensed font-black italic text-2xl text-white mb-5">
+              Onze sponsorpakketten
+            </h3>
+            <div className="bg-white rounded-sm overflow-hidden">
+              <div className="grid grid-cols-[1.5fr_1fr_1fr]">
+                {/* Header row */}
+                <div className="bg-[#1c2b4a] text-white text-sm font-bold px-4 py-3">
+                  Wat krijg je als sponsor?
+                </div>
+                <div className="bg-[#d4a82b] text-white text-center px-4 py-3">
+                  <div className="font-condensed font-black italic text-2xl leading-none">GOLD</div>
+                  <div className="text-sm font-semibold">€250</div>
+                </div>
+                <div className="bg-[#9aa0a6] text-white text-center px-4 py-3">
+                  <div className="font-condensed font-black italic text-2xl leading-none">SILVER</div>
+                  <div className="text-sm font-semibold">€150</div>
+                </div>
+
+                {/* Perk rows */}
+                {perks.map((p, i) => (
+                  <div key={p.label} className="contents">
+                    <div className={`px-4 py-3 text-sm text-gray-dark border-t border-[#e8e4df] ${i % 2 === 1 ? "bg-[#fafafa]" : ""}`}>
+                      {p.label}
+                    </div>
+                    <div className={`px-4 py-3 text-center border-t border-[#e8e4df] ${i % 2 === 1 ? "bg-[#fdf6e3]" : "bg-[#fff8e1]"}`}>
+                      <PerkCell value={p.gold} accent="gold" />
+                    </div>
+                    <div className={`px-4 py-3 text-center border-t border-[#e8e4df] ${i % 2 === 1 ? "bg-[#f4f4f5]" : "bg-[#fafafa]"}`}>
+                      <PerkCell value={p.silver} accent="silver" />
+                    </div>
+                  </div>
+                ))}
               </div>
-            ))}
+            </div>
           </div>
 
           {/* Contact form */}
@@ -128,5 +167,36 @@ export default async function SponsorsPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+function PerkCell({ value, accent }: { value: boolean | string; accent: "gold" | "silver" }) {
+  if (typeof value === "string") {
+    return (
+      <span
+        className={`inline-block text-xs font-bold px-2 py-1 rounded-sm ${
+          accent === "gold" ? "bg-[#d4a82b] text-white" : "bg-[#9aa0a6] text-white"
+        }`}
+      >
+        🎟 {value}
+      </span>
+    );
+  }
+  if (value) {
+    return (
+      <span className={accent === "gold" ? "text-[#d4a82b]" : "text-[#6b7280]"} aria-label="inbegrepen">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="inline-block">
+          <polyline points="20 6 9 17 4 12" />
+        </svg>
+      </span>
+    );
+  }
+  return (
+    <span className="text-gray-300" aria-label="niet inbegrepen">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="inline-block">
+        <line x1="18" y1="6" x2="6" y2="18" />
+        <line x1="6" y1="6" x2="18" y2="18" />
+      </svg>
+    </span>
   );
 }

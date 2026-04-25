@@ -18,6 +18,15 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  async rewrites() {
+    return [
+      {
+        source: "/sponsorfiche",
+        destination:
+          "https://fjqplmzorlkocowhumjl.supabase.co/storage/v1/object/public/sponsors/sponsorfiche.jpeg",
+      },
+    ];
+  },
 };
 
 export default nextConfig;
