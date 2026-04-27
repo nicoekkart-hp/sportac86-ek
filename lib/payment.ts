@@ -2,7 +2,7 @@ import { randomBytes } from "crypto";
 
 export const SPORTAC_IBAN = "BE71731066415669";
 export const SPORTAC_IBAN_FORMATTED = "BE71 7310 6641 5669";
-export const SPORTAC_BENEFICIARY = "Sportac 86 Deinze";
+export const SPORTAC_BENEFICIARY = "Sportac 86 EK ropeskipping";
 
 const REF_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 
