@@ -102,8 +102,9 @@ export async function sendPaymentInstructions(args: PaymentInstructionsArgs): Pr
       <tr><td style="color:#888;">Mededeling</td><td><span style="font-family:monospace;background:#fff7e6;border:1px solid #f0d090;padding:2px 6px;border-radius:3px;">${escape(args.reference)}</span></td></tr>
     </table>
     <p style="color:#555;">Vergeet de mededeling niet — zo vinden we je betaling meteen terug.</p>
-    <p>Liever scannen met je banking-app? Open de QR-code:</p>
+    <p>Liever scannen met je <strong>banking-app</strong> (KBC, Belfius, BNP, ING, Argenta…)? Open de QR-code:</p>
     <p><a href="${escape(link)}" style="display:inline-block;background:#E9483B;color:#fff;text-decoration:none;padding:10px 18px;border-radius:3px;font-weight:bold;">QR-code openen</a></p>
+    <p style="color:#888;font-size:12px;">Dit is een SEPA-overschrijving QR, geen Payconiq/Bancontact QR — scan met je gewone banking-app.</p>
     <p style="color:#888;font-size:12px;">Of kopieer deze link: ${escape(link)}</p>
     <p style="margin-top:24px;color:#555;font-size:13px;">Wat je besteld hebt: ${escape(args.itemSummary)}</p>
     <p style="margin-top:24px;">Dankjewel voor de steun!</p>
@@ -124,7 +125,8 @@ export async function sendPaymentInstructions(args: PaymentInstructionsArgs): Pr
     ``,
     `Vergeet de mededeling niet — zo vinden we je betaling meteen terug.`,
     ``,
-    `Liever scannen met je banking-app? Open de QR-code: ${link}`,
+    `Liever scannen met je banking-app (KBC, Belfius, BNP, ING, Argenta…)? Open de QR-code: ${link}`,
+    `(Dit is een SEPA-overschrijving QR, geen Payconiq/Bancontact QR — scan met je gewone banking-app.)`,
     ``,
     `Wat je besteld hebt: ${args.itemSummary}`,
     ``,
@@ -212,8 +214,9 @@ export async function sendPaymentReminder(args: PaymentReminderArgs): Promise<vo
       <tr><td style="color:#888;">Mededeling</td><td><span style="font-family:monospace;background:#fff7e6;border:1px solid #f0d090;padding:2px 6px;border-radius:3px;">${escape(args.reference)}</span></td></tr>
     </table>
     <p style="color:#555;">Vergeet de mededeling niet — zo vinden we je betaling meteen terug.</p>
-    <p>Liever scannen? Open de QR-code:</p>
+    <p>Liever scannen met je <strong>banking-app</strong> (KBC, Belfius, BNP, ING, Argenta…)? Open de QR-code:</p>
     <p><a href="${escape(link)}" style="display:inline-block;background:#E9483B;color:#fff;text-decoration:none;padding:10px 18px;border-radius:3px;font-weight:bold;">QR-code openen</a></p>
+    <p style="color:#888;font-size:12px;">Dit is een SEPA-overschrijving QR, geen Payconiq/Bancontact QR — scan met je gewone banking-app.</p>
     <p style="color:#888;font-size:12px;">Of kopieer deze link: ${escape(link)}</p>
     <p style="margin-top:24px;color:#555;">Heb je het ondertussen al overgeschreven? Dan kruisen onze mails elkaar — alvast bedankt en sorry voor de ruis!</p>
     <p>Team Sportac 86</p>
@@ -234,7 +237,8 @@ export async function sendPaymentReminder(args: PaymentReminderArgs): Promise<vo
     ``,
     `Vergeet de mededeling niet — zo vinden we je betaling meteen terug.`,
     ``,
-    `Liever scannen? Open de QR-code: ${link}`,
+    `Liever scannen met je banking-app (KBC, Belfius, BNP, ING, Argenta…)? Open de QR-code: ${link}`,
+    `(Dit is een SEPA-overschrijving QR, geen Payconiq/Bancontact QR — scan met je gewone banking-app.)`,
     ``,
     `Heb je het ondertussen al overgeschreven? Dan kruisen onze mails elkaar — alvast bedankt!`,
     `Team Sportac 86`,

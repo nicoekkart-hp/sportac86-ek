@@ -248,7 +248,7 @@ export function OrderForm({ saleId, saleSlug, products, packGroups, members, pic
       </button>
       <p className="text-xs text-gray-sub leading-relaxed">
         Na bevestiging zie je onze IBAN, het bedrag en een unieke mededeling. Je betaalt
-        via overschrijving — een QR-code maakt het scannen met je banking-app makkelijk.
+        via overschrijving — een QR-code (SEPA, geen Payconiq) maakt het scannen met je banking-app makkelijk.
       </p>
     </form>
   );

@@ -203,7 +203,10 @@ export default async function BetalingPage({
                 />
               </div>
               <p className="text-xs text-gray-sub leading-relaxed text-center">
-                Open je banking-app (KBC, Belfius, BNP, ING, Argenta…) en kies <strong>scan QR</strong>. Bedrag, rekeningnummer en mededeling worden automatisch ingevuld.
+                Open je <strong>banking-app</strong> (KBC, Belfius, BNP, ING, Argenta…) en kies <strong>scan QR</strong>. Bedrag, rekeningnummer en mededeling worden automatisch ingevuld.
+              </p>
+              <p className="text-xs text-gray-sub leading-relaxed text-center mt-2">
+                Let op: dit is een <strong>SEPA-overschrijving QR</strong>, geen Payconiq/Bancontact QR. Scan met je gewone banking-app, niet met de Bancontact-app.
               </p>
             </div>
           </div>
