@@ -338,7 +338,6 @@ export async function sendSponsorRequestNotification(
 
 type SponsorRequestConfirmationArgs = {
   to: string;
-  name: string;
   packageLabel: string | null;
   message: string | null;
 };
@@ -346,7 +345,6 @@ type SponsorRequestConfirmationArgs = {
 export async function sendSponsorRequestConfirmation(
   args: SponsorRequestConfirmationArgs,
 ): Promise<void> {
-  const firstName = args.name.split(" ")[0];
   const subject = `Bedankt voor je interesse als sponsor!`;
 
   const packagePhrase = args.packageLabel
@@ -355,7 +353,7 @@ export async function sendSponsorRequestConfirmation(
   const packagePhraseText = args.packageLabel ? ` voor het ${args.packageLabel}-pakket` : "";
 
   const bodyHtml = `
-    <p>Dag ${escape(firstName)},</p>
+    <p>Hallo,</p>
     <p>Bedankt om Sportac 86 te willen steunen op weg naar het EK in Melsomvik, Noorwegen — dat betekent enorm veel voor onze skippers!</p>
     <p>We hebben je aanvraag goed ontvangen${packagePhrase}. Een van ons neemt zo snel mogelijk persoonlijk contact met je op om de details verder te bespreken (logo, plaatsing, betaling, …).</p>
     ${
@@ -369,7 +367,7 @@ export async function sendSponsorRequestConfirmation(
   `;
 
   const text = [
-    `Dag ${firstName},`,
+    `Hallo,`,
     ``,
     `Bedankt om Sportac 86 te willen steunen op weg naar het EK in Melsomvik, Noorwegen — dat betekent enorm veel voor onze skippers!`,
     ``,
