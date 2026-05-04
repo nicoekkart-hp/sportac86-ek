@@ -292,3 +292,100 @@ export async function sendPaymentConfirmation(args: PaymentConfirmationArgs): Pr
 
   await send({ to: args.to, subject, html: layout({ title: "Je betaling is binnen", bodyHtml }), text });
 }
+
+type SponsorRequestNotificationArgs = {
+  name: string;
+  email: string;
+  packageLabel: string | null;
+  message: string | null;
+};
+
+export async function sendSponsorRequestNotification(
+  args: SponsorRequestNotificationArgs,
+): Promise<void> {
+  const to = process.env.SPONSOR_NOTIFY_TO ?? replyTo;
+  const subject = `Nieuwe sponsoraanvraag — ${args.name}`;
+
+  const bodyHtml = `
+    <p>Er is een nieuwe sponsoraanvraag binnengekomen via het formulier op de website.</p>
+    <table cellpadding="10" cellspacing="0" style="margin:16px 0;border:1px solid #e8e4df;border-radius:4px;width:100%;font-size:13px;">
+      <tr><td style="color:#888;width:140px;">Naam / Bedrijf</td><td>${escape(args.name)}</td></tr>
+      <tr><td style="color:#888;">E-mail</td><td><a href="mailto:${escape(args.email)}" style="color:#E9483B;">${escape(args.email)}</a></td></tr>
+      ${args.packageLabel ? `<tr><td style="color:#888;">Pakket</td><td>${escape(args.packageLabel)}</td></tr>` : ""}
+      ${args.message ? `<tr><td style="color:#888;vertical-align:top;">Bericht</td><td style="white-space:pre-wrap;">${escape(args.message)}</td></tr>` : ""}
+    </table>
+    <p style="color:#555;">Bekijk alle aanvragen in het admin paneel: <a href="${escape(siteUrl)}/admin/sponsor-aanvragen" style="color:#E9483B;">/admin/sponsor-aanvragen</a></p>
+  `;
+
+  const text = [
+    `Nieuwe sponsoraanvraag via de website:`,
+    ``,
+    `Naam / Bedrijf: ${args.name}`,
+    `E-mail:         ${args.email}`,
+    ...(args.packageLabel ? [`Pakket:         ${args.packageLabel}`] : []),
+    ...(args.message ? [``, `Bericht:`, args.message] : []),
+    ``,
+    `Admin paneel: ${siteUrl}/admin/sponsor-aanvragen`,
+  ].join("\n");
+
+  await send({
+    to,
+    subject,
+    html: layout({ title: "Nieuwe sponsoraanvraag", bodyHtml }),
+    text,
+  });
+}
+
+type SponsorRequestConfirmationArgs = {
+  to: string;
+  name: string;
+  packageLabel: string | null;
+  message: string | null;
+};
+
+export async function sendSponsorRequestConfirmation(
+  args: SponsorRequestConfirmationArgs,
+): Promise<void> {
+  const firstName = args.name.split(" ")[0];
+  const subject = `Bedankt voor je interesse als sponsor!`;
+
+  const packagePhrase = args.packageLabel
+    ? ` voor het <strong>${escape(args.packageLabel)}</strong>-pakket`
+    : "";
+  const packagePhraseText = args.packageLabel ? ` voor het ${args.packageLabel}-pakket` : "";
+
+  const bodyHtml = `
+    <p>Dag ${escape(firstName)},</p>
+    <p>Bedankt om Sportac 86 te willen steunen op weg naar het EK in Melsomvik, Noorwegen — dat betekent enorm veel voor onze skippers!</p>
+    <p>We hebben je aanvraag goed ontvangen${packagePhrase}. Een van ons neemt zo snel mogelijk persoonlijk contact met je op om de details verder te bespreken (logo, plaatsing, betaling, …).</p>
+    ${
+      args.message
+        ? `<p style="color:#555;font-size:13px;margin-bottom:6px;">Wat we van je noteerden:</p>
+           <blockquote style="margin:0 0 16px 0;padding:10px 14px;border-left:3px solid #e8e4df;background:#fafafa;color:#555;font-size:13px;white-space:pre-wrap;">${escape(args.message)}</blockquote>`
+        : ""
+    }
+    <p>Heb je ondertussen nog vragen? Antwoord gerust op deze mail of mail naar <a href="mailto:${escape(replyTo)}" style="color:#E9483B;">${escape(replyTo)}</a>.</p>
+    <p style="margin-top:24px;">Tot snel,<br/>Team Sportac 86</p>
+  `;
+
+  const text = [
+    `Dag ${firstName},`,
+    ``,
+    `Bedankt om Sportac 86 te willen steunen op weg naar het EK in Melsomvik, Noorwegen — dat betekent enorm veel voor onze skippers!`,
+    ``,
+    `We hebben je aanvraag goed ontvangen${packagePhraseText}. Een van ons neemt zo snel mogelijk persoonlijk contact met je op om de details verder te bespreken (logo, plaatsing, betaling, …).`,
+    ``,
+    ...(args.message ? [`Wat we van je noteerden:`, args.message, ``] : []),
+    `Heb je ondertussen nog vragen? Antwoord gerust op deze mail of mail naar ${replyTo}.`,
+    ``,
+    `Tot snel,`,
+    `Team Sportac 86`,
+  ].join("\n");
+
+  await send({
+    to: args.to,
+    subject,
+    html: layout({ title: "Bedankt voor je interesse", bodyHtml }),
+    text,
+  });
+}

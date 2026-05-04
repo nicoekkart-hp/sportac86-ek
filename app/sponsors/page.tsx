@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import { createServerClient } from "@/lib/supabase";
 import { Sponsor } from "@/lib/types";
 import { ScrollToSection } from "@/components/ScrollToSection";
+import { submitSponsorRequest } from "./actions";
 
 const levels = [
   { id: "gold", label: "Goud", description: "Logo prominent op homepage en alle pagina's" },
@@ -22,7 +23,11 @@ const perks: Perk[] = [
   { label: "Tickets eetfestijn", gold: "2 tickets", silver: false },
 ];
 
-export default async function SponsorsPage() {
+export default async function SponsorsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ aangevraagd?: string; error?: string }>;
+}) {
   const supabase = createServerClient();
   const { data } = await supabase
     .from("sponsors")
@@ -30,6 +35,9 @@ export default async function SponsorsPage() {
     .order("sort_order");
 
   const sponsors: Sponsor[] = data ?? [];
+  const params = await searchParams;
+  const submitted = params.aangevraagd === "1";
+  const submitError = params.error;
 
   return (
     <div className="pt-16">
@@ -145,25 +153,55 @@ export default async function SponsorsPage() {
           </div>
 
           {/* Contact form */}
-          <form action="/api/sponsor-request" method="POST" className="grid sm:grid-cols-2 gap-4 max-w-xl">
-            <div>
-              <label className="block text-sm font-semibold text-white mb-1">Naam / Bedrijf *</label>
-              <input type="text" name="name" required className="w-full bg-white/10 border border-white/15 text-white rounded-sm px-3 py-2 text-sm placeholder:text-gray-sub focus:outline-none focus:border-red-sportac" placeholder="Jouw naam of bedrijf" />
+          {submitted ? (
+            <div className="bg-green-500/10 border border-green-500/40 rounded-sm p-5 max-w-xl">
+              <div className="font-semibold text-white mb-1">Bedankt voor je aanvraag!</div>
+              <p className="text-gray-sub text-sm leading-relaxed">
+                We hebben je bericht goed ontvangen en nemen zo snel mogelijk persoonlijk contact met je op.
+              </p>
             </div>
-            <div>
-              <label className="block text-sm font-semibold text-white mb-1">E-mailadres *</label>
-              <input type="email" name="email" required className="w-full bg-white/10 border border-white/15 text-white rounded-sm px-3 py-2 text-sm placeholder:text-gray-sub focus:outline-none focus:border-red-sportac" placeholder="jouw@email.be" />
-            </div>
-            <div className="sm:col-span-2">
-              <label className="block text-sm font-semibold text-white mb-1">Bericht</label>
-              <textarea name="message" rows={3} className="w-full bg-white/10 border border-white/15 text-white rounded-sm px-3 py-2 text-sm placeholder:text-gray-sub focus:outline-none focus:border-red-sportac resize-none" placeholder="Ik ben geïnteresseerd in het goudpakket..." />
-            </div>
-            <div className="sm:col-span-2">
-              <button type="submit" className="bg-red-sportac text-white font-bold text-sm px-8 py-3 rounded-sm hover:bg-red-600 transition-colors">
-                Stuur aanvraag
-              </button>
-            </div>
-          </form>
+          ) : (
+            <form action={submitSponsorRequest} className="grid sm:grid-cols-2 gap-4 max-w-xl">
+              {submitError ? (
+                <div className="sm:col-span-2 bg-red-500/10 border border-red-500/40 rounded-sm p-3 text-sm text-white">
+                  Er ging iets mis bij het versturen. Probeer opnieuw of mail rechtstreeks naar{" "}
+                  <a href="mailto:sportac86ekropeskipping@gmail.com" className="text-red-sportac hover:underline">
+                    sportac86ekropeskipping@gmail.com
+                  </a>.
+                </div>
+              ) : null}
+              <div>
+                <label className="block text-sm font-semibold text-white mb-1">Naam / Bedrijf *</label>
+                <input type="text" name="name" required className="w-full bg-white/10 border border-white/15 text-white rounded-sm px-3 py-2 text-sm placeholder:text-gray-sub focus:outline-none focus:border-red-sportac" placeholder="Jouw naam of bedrijf" />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-white mb-1">E-mailadres *</label>
+                <input type="email" name="email" required className="w-full bg-white/10 border border-white/15 text-white rounded-sm px-3 py-2 text-sm placeholder:text-gray-sub focus:outline-none focus:border-red-sportac" placeholder="jouw@email.be" />
+              </div>
+              <div className="sm:col-span-2">
+                <label className="block text-sm font-semibold text-white mb-1">Pakket</label>
+                <select
+                  name="package"
+                  defaultValue=""
+                  className="w-full bg-white/10 border border-white/15 text-white rounded-sm px-3 py-2 text-sm focus:outline-none focus:border-red-sportac"
+                >
+                  <option value="" className="text-gray-dark">Kies een pakket…</option>
+                  <option value="gold" className="text-gray-dark">Gold — €250</option>
+                  <option value="silver" className="text-gray-dark">Silver — €150</option>
+                  <option value="other" className="text-gray-dark">Anders / nog niet zeker</option>
+                </select>
+              </div>
+              <div className="sm:col-span-2">
+                <label className="block text-sm font-semibold text-white mb-1">Bericht</label>
+                <textarea name="message" rows={3} className="w-full bg-white/10 border border-white/15 text-white rounded-sm px-3 py-2 text-sm placeholder:text-gray-sub focus:outline-none focus:border-red-sportac resize-none" placeholder="Eventuele vragen of opmerkingen..." />
+              </div>
+              <div className="sm:col-span-2">
+                <button type="submit" className="bg-red-sportac text-white font-bold text-sm px-8 py-3 rounded-sm hover:bg-red-600 transition-colors">
+                  Stuur aanvraag
+                </button>
+              </div>
+            </form>
+          )}
         </div>
       </div>
     </div>
