@@ -91,17 +91,18 @@ export async function GET() {
   ];
   (registrations ?? []).forEach((r) => {
     const slot = r.slot_id ? slotsMap.get(r.slot_id) : null;
-    let total = 0;
+    let computedTotal = 0;
     const breakdown = r.tickets
       ? Object.entries(r.tickets as Record<string, number>)
           .filter(([, qty]) => qty > 0)
           .map(([id, qty]) => {
             const t = ticketsMap.get(id);
-            if (t) total += (t.price_cents ?? 0) * qty;
+            if (t) computedTotal += (t.price_cents ?? 0) * qty;
             return `${qty}× ${t?.name ?? "(verwijderd)"}`;
           })
           .join(", ")
       : "";
+    const total = r.amount_cents ?? computedTotal;
     wsRegs.addRow({
       event: eventsMap.get(r.event_id)?.title ?? r.event_id,
       slot: slot?.date ?? "",
@@ -134,14 +135,15 @@ export async function GET() {
     { header: "Aangemaakt", key: "created_at", width: 20 },
   ];
   (orders ?? []).forEach((o) => {
-    let total = 0;
+    let computedTotal = 0;
     const itemsStr = Object.entries((o.items ?? {}) as Record<string, number>)
       .map(([pid, qty]) => {
         const p = productsMap.get(pid);
-        if (p) total += (p.price_cents ?? 0) * qty;
+        if (p) computedTotal += (p.price_cents ?? 0) * qty;
         return `${qty}× ${p?.name ?? "(verwijderd)"}`;
       })
       .join(", ");
+    const total = o.amount_cents ?? computedTotal;
     const slot = o.pickup_slot_id ? slotsMap.get(o.pickup_slot_id) : null;
     wsOrders.addRow({
       sale: o.sale_id ? salesMap.get(o.sale_id)?.name ?? "" : "",

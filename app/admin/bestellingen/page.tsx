@@ -19,6 +19,7 @@ type RawOrder = {
   payment_status: "pending" | "paid" | "failed";
   payment_reference: string | null;
   items: Record<string, number> | null;
+  amount_cents: number | null;
   is_delivered: boolean;
   last_reminder_at: string | null;
   reminder_count: number;
@@ -58,13 +59,12 @@ export default async function BestellingenPage() {
   const raw: RawOrder[] = (data as RawOrder[] | null) ?? [];
 
   const orders: OrderRow[] = raw.map((o) => {
-    let totalCents = 0;
     let itemSummary = "";
+    const totalCents = o.amount_cents ?? 0;
     if (o.sale_id && o.items) {
       const sp = productsBySale.get(o.sale_id) ?? [];
       const sg = groupsBySale.get(o.sale_id) ?? [];
       const cart = calcCart(sp, sg, o.items);
-      totalCents = cart.totalCents;
       itemSummary = cart.lineItems
         .map((l) => `${l.quantity}× ${l.name}`)
         .join(", ");

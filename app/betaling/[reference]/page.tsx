@@ -41,22 +41,25 @@ async function lookup(reference: string): Promise<LookupResult | null> {
   if (reference.startsWith("BEST-")) {
     const { data: order } = await supabase
       .from("orders")
-      .select("id, sale_id, name, email, items, payment_status, payment_reference")
+      .select("id, sale_id, name, email, items, amount_cents, payment_status, payment_reference")
       .eq("payment_reference", reference)
       .single();
     if (!order) return null;
 
-    let totalCents = 0;
+    let totalCents = order.amount_cents ?? 0;
     let backHref = "/steunen";
     if (order.sale_id) {
-      const [{ data: products }, { data: groups }, { data: sale }] = await Promise.all([
-        supabase.from("products").select("*").eq("sale_id", order.sale_id),
-        supabase.from("pack_groups").select("*").eq("sale_id", order.sale_id),
-        supabase.from("sales").select("slug").eq("id", order.sale_id).single(),
-      ]);
-      const cart = calcCart(products ?? [], groups ?? [], order.items ?? {});
-      totalCents = cart.totalCents;
+      const { data: sale } = await supabase
+        .from("sales").select("slug").eq("id", order.sale_id).single();
       if (sale?.slug) backHref = `/steunen/${sale.slug}`;
+      if (order.amount_cents == null) {
+        const [{ data: products }, { data: groups }] = await Promise.all([
+          supabase.from("products").select("*").eq("sale_id", order.sale_id),
+          supabase.from("pack_groups").select("*").eq("sale_id", order.sale_id),
+        ]);
+        const cart = calcCart(products ?? [], groups ?? [], order.items ?? {});
+        totalCents = cart.totalCents;
+      }
     }
 
     return {
@@ -73,20 +76,22 @@ async function lookup(reference: string): Promise<LookupResult | null> {
   if (reference.startsWith("INS-")) {
     const { data: reg } = await supabase
       .from("registrations")
-      .select("id, event_id, name, email, tickets, payment_status, payment_reference")
+      .select("id, event_id, name, email, tickets, amount_cents, payment_status, payment_reference")
       .eq("payment_reference", reference)
       .single();
     if (!reg) return null;
 
-    const [{ data: event }, { data: ticketRows }] = await Promise.all([
-      supabase.from("events").select("title, slug").eq("id", reg.event_id).single(),
-      supabase.from("event_tickets").select("id, price_cents").eq("event_id", reg.event_id),
-    ]);
+    const { data: event } = await supabase
+      .from("events").select("title, slug").eq("id", reg.event_id).single();
 
-    const priceById = new Map((ticketRows ?? []).map((t) => [t.id, t.price_cents]));
-    let totalCents = 0;
-    for (const [tid, qty] of Object.entries((reg.tickets as Record<string, number>) ?? {})) {
-      totalCents += (priceById.get(tid) ?? 0) * qty;
+    let totalCents = reg.amount_cents ?? 0;
+    if (reg.amount_cents == null) {
+      const { data: ticketRows } = await supabase
+        .from("event_tickets").select("id, price_cents").eq("event_id", reg.event_id);
+      const priceById = new Map((ticketRows ?? []).map((t) => [t.id, t.price_cents]));
+      for (const [tid, qty] of Object.entries((reg.tickets as Record<string, number>) ?? {})) {
+        totalCents += (priceById.get(tid) ?? 0) * qty;
+      }
     }
 
     return {

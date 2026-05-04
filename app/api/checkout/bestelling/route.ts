@@ -84,6 +84,7 @@ export async function POST(req: NextRequest) {
       email,
       phone,
       items,
+      amount_cents: totalCents,
       status: "new",
       payment_status: "pending",
       payment_reference,

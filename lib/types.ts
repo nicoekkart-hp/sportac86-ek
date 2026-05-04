@@ -50,6 +50,7 @@ export type Registration = {
   num_persons: number;
   remarks: string | null;
   tickets: Record<string, number> | null;
+  amount_cents: number;
   payment_reference: string | null;
   payment_status: "pending" | "paid" | "failed";
   last_reminder_at: string | null;
@@ -75,6 +76,7 @@ export type Order = {
   email: string;
   phone: string;
   items: Record<string, number>;
+  amount_cents: number;
   pickup_event_id: string | null;
   pickup_slot_id: string | null;
   status: "new" | "handled";

@@ -22,12 +22,13 @@ export async function togglePaymentStatus(id: string, current: "pending" | "paid
   if (next === "paid") {
     const { data: order } = await supabase
       .from("orders")
-      .select("name, email, items, sale_id, payment_reference, sales(name)")
+      .select("name, email, items, amount_cents, sale_id, payment_reference, sales(name)")
       .eq("id", id)
       .single<{
         name: string;
         email: string;
         items: Record<string, number> | null;
+        amount_cents: number | null;
         sale_id: string | null;
         payment_reference: string | null;
         sales: { name: string } | null;
@@ -38,8 +39,9 @@ export async function togglePaymentStatus(id: string, current: "pending" | "paid
         supabase.from("products").select("*").eq("sale_id", order.sale_id),
         supabase.from("pack_groups").select("*").eq("sale_id", order.sale_id),
       ]);
-      const { totalCents, lineItems } = calcCart(products ?? [], groups ?? [], order.items ?? {});
-      const itemSummary = lineItems.map((l) => `${l.quantity}× ${l.name}`).join(", ");
+      const cart = calcCart(products ?? [], groups ?? [], order.items ?? {});
+      const totalCents = order.amount_cents ?? cart.totalCents;
+      const itemSummary = cart.lineItems.map((l) => `${l.quantity}× ${l.name}`).join(", ");
       await sendPaymentConfirmation({
         to: order.email,
         name: order.name,
@@ -70,12 +72,13 @@ export async function deleteOrder(id: string) {
 async function sendReminderForOrderId(supabase: ReturnType<typeof createAdminClient>, id: string): Promise<"sent" | "skipped"> {
   const { data: order } = await supabase
     .from("orders")
-    .select("name, email, items, sale_id, payment_status, payment_reference, last_reminder_at, reminder_count, sales(name)")
+    .select("name, email, items, amount_cents, sale_id, payment_status, payment_reference, last_reminder_at, reminder_count, sales(name)")
     .eq("id", id)
     .single<{
       name: string;
       email: string;
       items: Record<string, number> | null;
+      amount_cents: number | null;
       sale_id: string | null;
       payment_status: "pending" | "paid" | "failed";
       payment_reference: string | null;
@@ -96,7 +99,8 @@ async function sendReminderForOrderId(supabase: ReturnType<typeof createAdminCli
     supabase.from("products").select("*").eq("sale_id", order.sale_id),
     supabase.from("pack_groups").select("*").eq("sale_id", order.sale_id),
   ]);
-  const { totalCents, lineItems } = calcCart(products ?? [], groups ?? [], order.items ?? {});
+  const { totalCents: computedTotal, lineItems } = calcCart(products ?? [], groups ?? [], order.items ?? {});
+  const totalCents = order.amount_cents ?? computedTotal;
   if (totalCents <= 0) return "skipped";
 
   await sendPaymentReminder({
