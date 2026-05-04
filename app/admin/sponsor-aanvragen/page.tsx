@@ -9,10 +9,17 @@ type SponsorRequest = {
   created_at: string;
 };
 
-export default async function SponsorAanvragenPage() {
+export default async function SponsorAanvragenPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ resent?: string; resend_error?: string }>;
+}) {
   const supabase = createAdminClient();
   const { data } = await supabase.from("sponsor_requests").select("*").order("created_at", { ascending: false });
   const requests: SponsorRequest[] = data ?? [];
+  const params = await searchParams;
+  const resentId = params.resent ?? null;
+  const resendErrorId = params.resend_error ?? null;
 
   return (
     <div className="p-8">
@@ -33,14 +40,29 @@ export default async function SponsorAanvragenPage() {
               </div>
               <div className="flex items-center gap-3 flex-shrink-0">
                 <span className="text-xs text-gray-sub">{new Date(r.created_at).toLocaleDateString("nl-BE", { day: "numeric", month: "long", year: "numeric" })}</span>
-                <form action={resendSponsorConfirmation.bind(null, r.id)}>
-                  <button
-                    type="submit"
-                    className="text-xs font-semibold px-2.5 py-1 rounded-sm border border-[#e8e4df] text-gray-dark hover:border-gray-400 transition-colors"
-                  >
-                    Bevestigingsmail opnieuw
-                  </button>
-                </form>
+                {resentId === r.id ? (
+                  <span className="text-xs font-semibold px-2.5 py-1 rounded-sm bg-green-50 border border-green-300 text-green-700">
+                    ✓ Mail verstuurd
+                  </span>
+                ) : resendErrorId === r.id ? (
+                  <form action={resendSponsorConfirmation.bind(null, r.id)}>
+                    <button
+                      type="submit"
+                      className="text-xs font-semibold px-2.5 py-1 rounded-sm border border-red-300 bg-red-50 text-red-700 hover:bg-red-100 transition-colors"
+                    >
+                      ✕ Mislukt — opnieuw?
+                    </button>
+                  </form>
+                ) : (
+                  <form action={resendSponsorConfirmation.bind(null, r.id)}>
+                    <button
+                      type="submit"
+                      className="text-xs font-semibold px-2.5 py-1 rounded-sm border border-[#e8e4df] text-gray-dark hover:border-gray-400 transition-colors"
+                    >
+                      Bevestigingsmail opnieuw
+                    </button>
+                  </form>
+                )}
                 <form action={deleteSponsorRequest.bind(null, r.id)}>
                   <button
                     type="submit"

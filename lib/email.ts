@@ -338,6 +338,7 @@ export async function sendSponsorRequestNotification(
 
 type SponsorRequestConfirmationArgs = {
   to: string;
+  name: string;
   packageLabel: string | null;
   message: string | null;
 };
@@ -355,7 +356,7 @@ export async function sendSponsorRequestConfirmation(
   const bodyHtml = `
     <p>Hallo,</p>
     <p>Bedankt om Sportac 86 te willen steunen op weg naar het EK in Melsomvik, Noorwegen — dat betekent enorm veel voor onze skippers!</p>
-    <p>We hebben je aanvraag goed ontvangen${packagePhrase}. Een van ons neemt zo snel mogelijk persoonlijk contact met je op om de details verder te bespreken (logo, plaatsing, betaling, …).</p>
+    <p>We hebben je aanvraag van <strong>${escape(args.name)}</strong> goed ontvangen${packagePhrase}. Een van ons neemt zo snel mogelijk persoonlijk contact met je op om de details verder te bespreken (logo, plaatsing, betaling, …).</p>
     ${
       args.message
         ? `<p style="color:#555;font-size:13px;margin-bottom:6px;">Wat we van je noteerden:</p>
@@ -371,7 +372,7 @@ export async function sendSponsorRequestConfirmation(
     ``,
     `Bedankt om Sportac 86 te willen steunen op weg naar het EK in Melsomvik, Noorwegen — dat betekent enorm veel voor onze skippers!`,
     ``,
-    `We hebben je aanvraag goed ontvangen${packagePhraseText}. Een van ons neemt zo snel mogelijk persoonlijk contact met je op om de details verder te bespreken (logo, plaatsing, betaling, …).`,
+    `We hebben je aanvraag van ${args.name} goed ontvangen${packagePhraseText}. Een van ons neemt zo snel mogelijk persoonlijk contact met je op om de details verder te bespreken (logo, plaatsing, betaling, …).`,
     ``,
     ...(args.message ? [`Wat we van je noteerden:`, args.message, ``] : []),
     `Heb je ondertussen nog vragen? Antwoord gerust op deze mail of mail naar ${replyTo}.`,

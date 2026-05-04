@@ -2,6 +2,7 @@
 
 import { createAdminClient } from "@/lib/supabase-admin";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { sendSponsorRequestConfirmation } from "@/lib/email";
 
 export async function deleteSponsorRequest(id: string) {
@@ -33,21 +34,28 @@ export async function resendSponsorConfirmation(id: string): Promise<void> {
   const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("sponsor_requests")
-    .select("email, message")
+    .select("name, email, message")
     .eq("id", id)
     .single();
 
   if (error || !data) {
     console.error("[resendSponsorConfirmation] not found:", id, error);
-    revalidatePath("/admin/sponsor-aanvragen");
-    return;
+    redirect(`/admin/sponsor-aanvragen?resend_error=${id}`);
   }
 
-  const { packageLabel, message } = parseStoredMessage(data.message);
-  await sendSponsorRequestConfirmation({
-    to: data.email,
-    packageLabel,
-    message,
-  });
+  try {
+    const { packageLabel, message } = parseStoredMessage(data.message);
+    await sendSponsorRequestConfirmation({
+      to: data.email,
+      name: data.name,
+      packageLabel,
+      message,
+    });
+  } catch (err) {
+    console.error("[resendSponsorConfirmation] send failed:", id, err);
+    redirect(`/admin/sponsor-aanvragen?resend_error=${id}`);
+  }
+
   revalidatePath("/admin/sponsor-aanvragen");
+  redirect(`/admin/sponsor-aanvragen?resent=${id}`);
 }

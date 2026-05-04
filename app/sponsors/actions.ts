@@ -56,6 +56,7 @@ export async function submitSponsorRequest(formData: FormData) {
     }),
     sendSponsorRequestConfirmation({
       to: email,
+      name,
       packageLabel,
       message: userMessageOrNull,
     }),
