@@ -21,12 +21,13 @@ export async function togglePaymentStatus(id: string, current: "pending" | "paid
   if (next === "paid") {
     const { data: reg } = await supabase
       .from("registrations")
-      .select("name, email, tickets, event_id, payment_reference, events(title)")
+      .select("name, email, tickets, amount_cents, event_id, payment_reference, events(title)")
       .eq("id", id)
       .single<{
         name: string;
         email: string;
         tickets: Record<string, number> | null;
+        amount_cents: number | null;
         event_id: string;
         payment_reference: string | null;
         events: { title: string } | null;
@@ -38,14 +39,15 @@ export async function togglePaymentStatus(id: string, current: "pending" | "paid
         .select("id, name, price_cents")
         .eq("event_id", reg.event_id);
       const ticketById = new Map((ticketRows ?? []).map((t) => [t.id, t]));
-      let totalCents = 0;
+      let computedTotal = 0;
       const summaryParts: string[] = [];
       for (const [tid, qty] of Object.entries(reg.tickets ?? {})) {
         const t = ticketById.get(tid);
         if (!t || qty <= 0) continue;
-        totalCents += t.price_cents * qty;
+        computedTotal += t.price_cents * qty;
         summaryParts.push(`${qty}× ${t.name}`);
       }
+      const totalCents = reg.amount_cents ?? computedTotal;
       await sendPaymentConfirmation({
         to: reg.email,
         name: reg.name,
@@ -67,12 +69,13 @@ async function sendReminderForRegistrationId(
 ): Promise<"sent" | "skipped"> {
   const { data: reg } = await supabase
     .from("registrations")
-    .select("name, email, tickets, event_id, payment_status, payment_reference, last_reminder_at, reminder_count, events(title)")
+    .select("name, email, tickets, amount_cents, event_id, payment_status, payment_reference, last_reminder_at, reminder_count, events(title)")
     .eq("id", id)
     .single<{
       name: string;
       email: string;
       tickets: Record<string, number> | null;
+      amount_cents: number | null;
       event_id: string;
       payment_status: "pending" | "paid" | "failed";
       payment_reference: string | null;
@@ -95,14 +98,15 @@ async function sendReminderForRegistrationId(
     .eq("event_id", reg.event_id);
   const ticketById = new Map((ticketRows ?? []).map((t) => [t.id, t]));
 
-  let totalCents = 0;
+  let computedTotal = 0;
   const lineItems: { name: string; quantity: number; unitCents: number }[] = [];
   for (const [tid, qty] of Object.entries(reg.tickets ?? {})) {
     const t = ticketById.get(tid);
     if (!t || qty <= 0) continue;
-    totalCents += t.price_cents * qty;
+    computedTotal += t.price_cents * qty;
     lineItems.push({ name: t.name, quantity: qty, unitCents: t.price_cents });
   }
+  const totalCents = reg.amount_cents ?? computedTotal;
   if (totalCents <= 0) return "skipped";
 
   await sendPaymentReminder({

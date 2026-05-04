@@ -72,6 +72,11 @@ export async function POST(req: NextRequest) {
   const ticketsJson: Record<string, number> = {};
   for (const r of requested) ticketsJson[r.ticket_id] = r.qty;
 
+  const totalCents = requested.reduce((sum, r) => {
+    const t = ticketById.get(r.ticket_id)!;
+    return sum + t.price_cents * r.qty;
+  }, 0);
+
   const adminSupabase = createAdminClient();
 
   // Idempotency guard: same email + slot within last 60s -> reuse the existing registration.
@@ -101,6 +106,7 @@ export async function POST(req: NextRequest) {
       num_persons: totalPersons,
       remarks,
       tickets: ticketsJson,
+      amount_cents: totalCents,
       payment_status: "pending",
       payment_reference,
     })
@@ -111,10 +117,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Database fout" }, { status: 500 });
   }
 
-  const totalCents = requested.reduce((sum, r) => {
-    const t = ticketById.get(r.ticket_id)!;
-    return sum + t.price_cents * r.qty;
-  }, 0);
   const itemSummary = requested
     .map((r) => `${r.qty}× ${ticketById.get(r.ticket_id)!.name}`)
     .join(", ");

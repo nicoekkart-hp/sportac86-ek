@@ -20,7 +20,7 @@ export default async function InschrijvingenPage() {
   const allRegs: Registration[] = registrations ?? [];
 
   const rows: RegRow[] = allRegs.map((r) => {
-    let totalCents = 0;
+    const totalCents = r.amount_cents ?? 0;
     let ticketSummary = "—";
     if (r.tickets) {
       const parts: string[] = [];
@@ -31,7 +31,6 @@ export default async function InschrijvingenPage() {
           parts.push(`${qty}× (verwijderd)`);
           continue;
         }
-        totalCents += t.price_cents * qty;
         parts.push(`${qty}× ${t.name}`);
       }
       if (parts.length > 0) ticketSummary = parts.join(", ");
