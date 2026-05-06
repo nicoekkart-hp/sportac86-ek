@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { EventSlot, EventTicket } from "@/lib/types";
 import { formatPrice } from "@/lib/format";
+import { Honeypot } from "@/components/Honeypot";
 
 type SlotWithTaken = EventSlot & { taken: number };
 
@@ -82,9 +83,11 @@ export function RegistrationForm({
           e.preventDefault();
           return;
         }
+
         setSubmitting(true);
       }}
     >
+      <Honeypot />
       <input type="hidden" name="event_id" value={eventId} />
       <input type="hidden" name="event_slug" value={eventSlug} />
 

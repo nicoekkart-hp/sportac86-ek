@@ -1,15 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import { checkBotId } from "botid/server";
 import { createServerClient } from "@/lib/supabase";
 import { createAdminClient } from "@/lib/supabase-admin";
+import { isHoneypotTripped } from "@/lib/honeypot";
 
 export async function POST(req: NextRequest) {
-  const verification = await checkBotId();
-  if (verification.isBot) {
-    return NextResponse.redirect(new URL("/agenda?error=bot", req.url), 303);
-  }
-
   const formData = await req.formData();
+  if (isHoneypotTripped(formData)) {
+    // Pretend success so the bot doesn't retry with a different shape.
+    return NextResponse.redirect(new URL("/agenda?ingeschreven=1", req.url), 303);
+  }
   const event_id = (formData.get("event_id") as string)?.trim();
   const slot_id = (formData.get("slot_id") as string)?.trim();
   const name = (formData.get("name") as string)?.trim();

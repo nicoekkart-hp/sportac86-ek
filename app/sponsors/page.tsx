@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import { createServerClient } from "@/lib/supabase";
 import { Sponsor } from "@/lib/types";
 import { ScrollToSection } from "@/components/ScrollToSection";
+import { Honeypot } from "@/components/Honeypot";
 import { submitSponsorRequest } from "./actions";
 
 const levels = [
@@ -162,6 +163,7 @@ export default async function SponsorsPage({
             </div>
           ) : (
             <form action={submitSponsorRequest} className="grid sm:grid-cols-2 gap-4 max-w-xl">
+              <Honeypot />
               {submitError ? (
                 <div className="sm:col-span-2 bg-red-500/10 border border-red-500/40 rounded-sm p-3 text-sm text-white">
                   Er ging iets mis bij het versturen. Probeer opnieuw of mail rechtstreeks naar{" "}

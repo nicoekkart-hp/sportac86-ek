@@ -1,18 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
-import { checkBotId } from "botid/server";
 import { createAdminClient } from "@/lib/supabase-admin";
 import { PackGroup, Product } from "@/lib/types";
 import { calcCart } from "@/lib/pricing";
 import { generatePaymentReference } from "@/lib/payment";
 import { sendPaymentInstructions } from "@/lib/email";
+import { isHoneypotTripped } from "@/lib/honeypot";
 
 export async function POST(req: NextRequest) {
-  const verification = await checkBotId();
-  if (verification.isBot) {
-    return NextResponse.redirect(new URL("/steunen?error=bot", req.url), 303);
-  }
-
   const formData = await req.formData();
+  if (isHoneypotTripped(formData)) {
+    return NextResponse.redirect(new URL("/steunen", req.url), 303);
+  }
   const sale_id = (formData.get("sale_id") as string)?.trim();
   const sale_slug = (formData.get("sale_slug") as string)?.trim();
   const name = (formData.get("name") as string)?.trim();

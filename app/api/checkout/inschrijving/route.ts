@@ -1,17 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
-import { checkBotId } from "botid/server";
 import { createAdminClient } from "@/lib/supabase-admin";
 import { createServerClient } from "@/lib/supabase";
 import { generatePaymentReference } from "@/lib/payment";
 import { sendPaymentInstructions } from "@/lib/email";
+import { isHoneypotTripped } from "@/lib/honeypot";
 
 export async function POST(req: NextRequest) {
-  const verification = await checkBotId();
-  if (verification.isBot) {
-    return NextResponse.redirect(new URL("/agenda?error=bot", req.url), 303);
-  }
-
   const formData = await req.formData();
+  if (isHoneypotTripped(formData)) {
+    return NextResponse.redirect(new URL("/agenda", req.url), 303);
+  }
   const event_id = (formData.get("event_id") as string)?.trim();
   const slot_id = (formData.get("slot_id") as string)?.trim();
   const name = (formData.get("name") as string)?.trim();

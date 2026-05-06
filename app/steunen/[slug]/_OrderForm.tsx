@@ -6,6 +6,7 @@ import { EventSlot, PackGroup, Product, TeamMember } from "@/lib/types";
 import { formatPrice } from "@/lib/format";
 import { calcCart } from "@/lib/pricing";
 import { ProductInfoModal } from "@/components/ProductInfoModal";
+import { Honeypot } from "@/components/Honeypot";
 
 const FMT_PICKUP = new Intl.DateTimeFormat("nl-BE", {
   weekday: "long",
@@ -76,6 +77,7 @@ export function OrderForm({ saleId, saleSlug, products, packGroups, members, pic
         setSubmitting(true);
       }}
     >
+      <Honeypot />
       <input type="hidden" name="sale_id" value={saleId} />
       <input type="hidden" name="sale_slug" value={saleSlug} />
 

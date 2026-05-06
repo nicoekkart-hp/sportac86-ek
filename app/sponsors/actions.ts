@@ -1,8 +1,8 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { checkBotId } from "botid/server";
 import { createAdminClient } from "@/lib/supabase-admin";
+import { isHoneypotTripped } from "@/lib/honeypot";
 import {
   sendSponsorRequestConfirmation,
   sendSponsorRequestNotification,
@@ -15,9 +15,8 @@ const PACKAGE_LABELS: Record<string, string> = {
 };
 
 export async function submitSponsorRequest(formData: FormData) {
-  const verification = await checkBotId();
-  if (verification.isBot) {
-    redirect("/sponsors?error=bot&sectie=aanvragen");
+  if (isHoneypotTripped(formData)) {
+    redirect("/sponsors?aangevraagd=1&sectie=aanvragen");
   }
 
   const nameVal = formData.get("name");

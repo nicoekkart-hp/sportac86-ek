@@ -1,17 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
-import { checkBotId } from "botid/server";
 import { createServerClient } from "@/lib/supabase";
+import { isHoneypotTripped } from "@/lib/honeypot";
 
 const CANDY_IDS = ["mars", "snickers", "twix"];
 const WINE_IDS = ["rood", "wit", "rose"];
 
 export async function POST(req: NextRequest) {
-  const verification = await checkBotId();
-  if (verification.isBot) {
-    return NextResponse.redirect(new URL("/steunen?error=bot", req.url));
-  }
-
   const formData = await req.formData();
+  if (isHoneypotTripped(formData)) {
+    return NextResponse.redirect(new URL("/steunen?besteld=snoep", req.url));
+  }
   const typeVal = formData.get("type");
   const nameVal = formData.get("name");
   const emailVal = formData.get("email");
