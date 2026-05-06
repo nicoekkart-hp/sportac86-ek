@@ -1,8 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
+import { checkBotId } from "botid/server";
 import { createServerClient } from "@/lib/supabase";
 import { createAdminClient } from "@/lib/supabase-admin";
 
 export async function POST(req: NextRequest) {
+  const verification = await checkBotId();
+  if (verification.isBot) {
+    return NextResponse.redirect(new URL("/agenda?error=bot", req.url), 303);
+  }
+
   const formData = await req.formData();
   const event_id = (formData.get("event_id") as string)?.trim();
   const slot_id = (formData.get("slot_id") as string)?.trim();

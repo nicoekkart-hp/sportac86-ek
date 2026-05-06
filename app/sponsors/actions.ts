@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { checkBotId } from "botid/server";
 import { createAdminClient } from "@/lib/supabase-admin";
 import {
   sendSponsorRequestConfirmation,
@@ -14,6 +15,11 @@ const PACKAGE_LABELS: Record<string, string> = {
 };
 
 export async function submitSponsorRequest(formData: FormData) {
+  const verification = await checkBotId();
+  if (verification.isBot) {
+    redirect("/sponsors?error=bot&sectie=aanvragen");
+  }
+
   const nameVal = formData.get("name");
   const emailVal = formData.get("email");
   const messageVal = formData.get("message");

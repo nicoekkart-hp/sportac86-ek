@@ -1,10 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
+import { checkBotId } from "botid/server";
 import { createAdminClient } from "@/lib/supabase-admin";
 import { createServerClient } from "@/lib/supabase";
 import { generatePaymentReference } from "@/lib/payment";
 import { sendPaymentInstructions } from "@/lib/email";
 
 export async function POST(req: NextRequest) {
+  const verification = await checkBotId();
+  if (verification.isBot) {
+    return NextResponse.json({ error: "Toegang geweigerd" }, { status: 403 });
+  }
+
   const formData = await req.formData();
   const event_id = (formData.get("event_id") as string)?.trim();
   const slot_id = (formData.get("slot_id") as string)?.trim();

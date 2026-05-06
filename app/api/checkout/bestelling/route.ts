@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { checkBotId } from "botid/server";
 import { createAdminClient } from "@/lib/supabase-admin";
 import { PackGroup, Product } from "@/lib/types";
 import { calcCart } from "@/lib/pricing";
@@ -6,6 +7,11 @@ import { generatePaymentReference } from "@/lib/payment";
 import { sendPaymentInstructions } from "@/lib/email";
 
 export async function POST(req: NextRequest) {
+  const verification = await checkBotId();
+  if (verification.isBot) {
+    return NextResponse.json({ error: "Toegang geweigerd" }, { status: 403 });
+  }
+
   const formData = await req.formData();
   const sale_id = (formData.get("sale_id") as string)?.trim();
   const sale_slug = (formData.get("sale_slug") as string)?.trim();
