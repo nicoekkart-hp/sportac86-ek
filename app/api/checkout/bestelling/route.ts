@@ -9,7 +9,7 @@ import { sendPaymentInstructions } from "@/lib/email";
 export async function POST(req: NextRequest) {
   const verification = await checkBotId();
   if (verification.isBot) {
-    return NextResponse.json({ error: "Toegang geweigerd" }, { status: 403 });
+    return NextResponse.redirect(new URL("/steunen?error=bot", req.url), 303);
   }
 
   const formData = await req.formData();
