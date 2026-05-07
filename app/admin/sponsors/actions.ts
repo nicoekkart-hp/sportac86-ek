@@ -33,6 +33,7 @@ export async function createSponsor(formData: FormData) {
   if (error) redirect("/admin/sponsors?error=1");
   revalidatePath("/admin/sponsors");
   revalidatePath("/sponsors");
+  revalidatePath("/");
   redirect("/admin/sponsors");
 }
 
@@ -48,6 +49,7 @@ export async function updateSponsor(id: string, formData: FormData) {
   if (error) redirect("/admin/sponsors?error=1");
   revalidatePath("/admin/sponsors");
   revalidatePath("/sponsors");
+  revalidatePath("/");
   redirect("/admin/sponsors");
 }
 
@@ -56,5 +58,6 @@ export async function deleteSponsor(id: string) {
   await supabase.from("sponsors").delete().eq("id", id);
   revalidatePath("/admin/sponsors");
   revalidatePath("/sponsors");
+  revalidatePath("/");
   redirect("/admin/sponsors");
 }

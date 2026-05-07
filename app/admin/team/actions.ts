@@ -42,6 +42,7 @@ export async function createTeamMember(formData: FormData) {
   if (error) redirect("/admin/team?error=1");
   revalidatePath("/admin/team");
   revalidatePath("/team");
+  revalidatePath("/");
   redirect("/admin/team");
 }
 
@@ -66,6 +67,7 @@ export async function updateTeamMember(id: string, formData: FormData) {
   if (error) redirect("/admin/team?error=1");
   revalidatePath("/admin/team");
   revalidatePath("/team");
+  revalidatePath("/");
   redirect("/admin/team");
 }
 
@@ -74,5 +76,6 @@ export async function deleteTeamMember(id: string) {
   await supabase.from("team_members").delete().eq("id", id);
   revalidatePath("/admin/team");
   revalidatePath("/team");
+  revalidatePath("/");
   redirect("/admin/team");
 }
