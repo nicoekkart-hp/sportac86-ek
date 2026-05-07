@@ -1,3 +1,7 @@
+"use client";
+
+import Image from "next/image";
+import { useState } from "react";
 import { Sponsor } from "@/lib/types";
 
 const levels = [
@@ -8,8 +12,10 @@ const levels = [
 ];
 
 export function SponsorForm({ sponsor, action }: { sponsor?: Sponsor; action: (formData: FormData) => Promise<void> }) {
+  const [preview, setPreview] = useState<string | null>(sponsor?.logo_url ?? null);
+
   return (
-    <form action={action} className="flex flex-col gap-5 max-w-xl">
+    <form action={action} className="flex flex-col gap-5 max-w-xl" encType="multipart/form-data">
       <div className="grid sm:grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-semibold mb-1">Naam *</label>
@@ -29,8 +35,35 @@ export function SponsorForm({ sponsor, action }: { sponsor?: Sponsor; action: (f
       </div>
 
       <div>
-        <label className="block text-sm font-semibold mb-1">Logo URL</label>
-        <input type="url" name="logo_url" defaultValue={sponsor?.logo_url ?? ""} placeholder="https://..." className="w-full border border-[#e8e4df] rounded-sm px-3 py-2 text-sm focus:outline-none focus:border-red-sportac" />
+        <label className="block text-sm font-semibold mb-2">Logo</label>
+        <div className="flex items-start gap-4">
+          {preview && (
+            <div className="relative w-24 h-24 rounded-sm overflow-hidden bg-[#ddd8d0] flex-shrink-0 flex items-center justify-center">
+              <Image src={preview} alt="Preview" fill className="object-contain p-2" sizes="96px" />
+            </div>
+          )}
+          <div className="flex-1 flex flex-col gap-2">
+            <input
+              type="file"
+              name="logo_file"
+              accept="image/*"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) setPreview(URL.createObjectURL(file));
+              }}
+              className="w-full text-sm text-gray-body file:mr-3 file:py-1.5 file:px-3 file:rounded-sm file:border-0 file:text-sm file:font-semibold file:bg-red-sportac file:text-white hover:file:bg-red-600 file:cursor-pointer"
+            />
+            <p className="text-xs text-gray-sub">Of gebruik een externe URL:</p>
+            <input
+              type="url"
+              name="logo_url"
+              defaultValue={sponsor?.logo_url ?? ""}
+              placeholder="https://..."
+              className="w-full border border-[#e8e4df] rounded-sm px-3 py-2 text-sm focus:outline-none focus:border-red-sportac"
+              onChange={(e) => { if (e.target.value) setPreview(e.target.value); }}
+            />
+          </div>
+        </div>
       </div>
 
       <div>
