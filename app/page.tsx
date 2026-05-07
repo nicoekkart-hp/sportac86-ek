@@ -36,6 +36,8 @@ export default async function HomePage() {
 
   const teamMembers: TeamMember[] = (teamMembersData ?? []).filter((m: TeamMember) => m.role === "Skipper");
   const sponsors: Sponsor[] = sponsorsData ?? [];
+  const goldSponsors = sponsors.filter((s) => s.level === "gold");
+  const silverSponsors = sponsors.filter((s) => s.level === "silver");
   const sales: Sale[] = salesData ?? [];
   const featuredEvents: EventRecord[] = featuredEventsData ?? [];
   const galleryPhotos: GalleryPhoto[] = galleryData ?? [];
@@ -275,10 +277,27 @@ export default async function HomePage() {
             </span>
             <div className="flex-1 h-px bg-gray-200" />
           </div>
-          <div className="flex gap-3 flex-wrap items-center">
-            {sponsors.map((sponsor) => (
-              <SponsorTile key={sponsor.id} sponsor={sponsor} size="md" />
-            ))}
+          {goldSponsors.length > 0 && (
+            <div className="mb-6">
+              <div className="text-[10px] font-bold tracking-[0.2em] uppercase text-red-sportac mb-3 text-center">Goud</div>
+              <div className="flex gap-4 flex-wrap items-center justify-center">
+                {goldSponsors.map((sponsor) => (
+                  <SponsorTile key={sponsor.id} sponsor={sponsor} size="lg" />
+                ))}
+              </div>
+            </div>
+          )}
+          {silverSponsors.length > 0 && (
+            <div className="mb-6">
+              <div className="text-[10px] font-bold tracking-[0.2em] uppercase text-gray-sub mb-3 text-center">Zilver</div>
+              <div className="flex gap-3 flex-wrap items-center justify-center">
+                {silverSponsors.map((sponsor) => (
+                  <SponsorTile key={sponsor.id} sponsor={sponsor} size="sm" />
+                ))}
+              </div>
+            </div>
+          )}
+          <div className="flex justify-center">
             <Link
               href="/sponsors#aanvragen"
               className="bg-red-sportac/5 border border-dashed border-red-sportac/40 rounded-sm px-7 py-3.5 text-sm font-semibold text-red-sportac hover:bg-red-sportac/10 transition-colors"
