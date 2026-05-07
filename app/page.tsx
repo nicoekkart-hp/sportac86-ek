@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Countdown } from "@/components/Countdown";
 import { TeamGrid } from "@/components/TeamGrid";
+import { SponsorTile } from "@/components/SponsorTile";
 import { SupportTile } from "@/components/SupportTile";
 import { PhotoGallery } from "@/components/PhotoGallery";
 import { createServerClient } from "@/lib/supabase";
@@ -276,24 +277,7 @@ export default async function HomePage() {
           </div>
           <div className="flex gap-3 flex-wrap items-center">
             {sponsors.map((sponsor) => (
-              sponsor.website_url ? (
-                <a
-                  key={sponsor.id}
-                  href={sponsor.website_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="bg-gray-warm border border-[#e8e4df] rounded-sm px-7 py-3.5 text-sm font-semibold text-gray-sub hover:text-gray-dark transition-colors"
-                >
-                  {sponsor.name}
-                </a>
-              ) : (
-                <div
-                  key={sponsor.id}
-                  className="bg-gray-warm border border-[#e8e4df] rounded-sm px-7 py-3.5 text-sm font-semibold text-gray-sub"
-                >
-                  {sponsor.name}
-                </div>
-            )
+              <SponsorTile key={sponsor.id} sponsor={sponsor} size="md" />
             ))}
             <Link
               href="/sponsors#aanvragen"

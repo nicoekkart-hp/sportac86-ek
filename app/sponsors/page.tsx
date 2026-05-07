@@ -4,6 +4,7 @@ import { createServerClient } from "@/lib/supabase";
 import { Sponsor } from "@/lib/types";
 import { ScrollToSection } from "@/components/ScrollToSection";
 import { Honeypot } from "@/components/Honeypot";
+import { SponsorTile } from "@/components/SponsorTile";
 import { submitSponsorRequest } from "./actions";
 
 const levels = [
@@ -72,23 +73,9 @@ export default async function SponsorsPage({
                 <div className="w-5 h-0.5 bg-red-sportac" />
                 <span className="text-xs font-bold tracking-[0.2em] uppercase text-red-sportac">{level.label}</span>
               </div>
-              <div className="flex gap-3 flex-wrap">
+              <div className="flex gap-3 flex-wrap items-center">
                 {levelSponsors.map((s) => (
-                  s.website_url ? (
-                    <a
-                      key={s.id}
-                      href={s.website_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="bg-white border border-[#e8e4df] rounded-sm px-8 py-4 text-sm font-semibold text-gray-sub hover:text-gray-dark hover:border-gray-400 transition-colors"
-                    >
-                      {s.name}
-                    </a>
-                  ) : (
-                    <div key={s.id} className="bg-white border border-[#e8e4df] rounded-sm px-8 py-4 text-sm font-semibold text-gray-sub">
-                      {s.name}
-                    </div>
-                  )
+                  <SponsorTile key={s.id} sponsor={s} size="lg" />
                 ))}
               </div>
             </div>
