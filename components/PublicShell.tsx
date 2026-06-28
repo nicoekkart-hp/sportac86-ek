@@ -7,8 +7,9 @@ import { Footer } from "@/components/Footer";
 export function PublicShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isAdmin = pathname.startsWith("/admin");
+  const isChromeless = pathname.startsWith("/slideshow");
 
-  if (isAdmin) {
+  if (isAdmin || isChromeless) {
     return <>{children}</>;
   }
 
