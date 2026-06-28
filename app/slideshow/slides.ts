@@ -1,4 +1,4 @@
-import { Sponsor, TeamMember } from "@/lib/types";
+import { Sponsor, TeamMember, GalleryPhoto } from "@/lib/types";
 
 // Shared slide model used by both the web slideshow and the .pptx generator.
 // Keeping the slide order in one place means the deck stays identical across
@@ -18,18 +18,11 @@ export const LEVEL_LABEL: Record<Sponsor["level"], string> = {
   partner: "Partner",
 };
 
-// Group photos shipped in /public/groepsfotos. Web-relative paths.
-export const GROUP_PHOTOS = [
-  "/groepsfotos/IMG_6011.jpeg",
-  "/groepsfotos/IMG_6015.jpeg",
-  "/groepsfotos/IMG_6016.jpeg",
-  "/groepsfotos/IMG_6017.jpeg",
-];
-
 export function buildSlides(
   sponsors: Sponsor[],
   team: TeamMember[],
   ekDate: string,
+  galleryPhotos: GalleryPhoto[] = [],
 ): Slide[] {
   // Gold first, then silver — each ordered by sort_order.
   const byOrder = (a: Sponsor, b: Sponsor) => a.sort_order - b.sort_order;
@@ -48,8 +41,12 @@ export function buildSlides(
     slides.push({ kind: "sponsor", sponsor });
   }
   slides.push({ kind: "roster", skippers });
-  GROUP_PHOTOS.forEach((src, i) =>
-    slides.push({ kind: "photo", src, index: i + 1, total: GROUP_PHOTOS.length }),
+
+  // Action shots come from the homepage gallery (gallery_photos), already
+  // filtered to published and ordered by sort_order by the caller.
+  const photos = galleryPhotos;
+  photos.forEach((p, i) =>
+    slides.push({ kind: "photo", src: p.image_url, index: i + 1, total: photos.length }),
   );
 
   return slides;

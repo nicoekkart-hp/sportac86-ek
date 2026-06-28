@@ -1,5 +1,5 @@
 import { createServerClient } from "@/lib/supabase";
-import { Sponsor, TeamMember } from "@/lib/types";
+import { Sponsor, TeamMember, GalleryPhoto } from "@/lib/types";
 import { buildSlides } from "./slides";
 import { Slideshow } from "./Slideshow";
 
@@ -13,16 +13,23 @@ export const dynamic = "force-dynamic";
 
 export default async function SlideshowPage() {
   const supabase = createServerClient();
-  const [{ data: sponsorData }, { data: teamData }] = await Promise.all([
-    supabase.from("sponsors").select("*").order("sort_order"),
-    supabase.from("team_members").select("*").order("sort_order"),
-  ]);
+  const [{ data: sponsorData }, { data: teamData }, { data: galleryData }] =
+    await Promise.all([
+      supabase.from("sponsors").select("*").order("sort_order"),
+      supabase.from("team_members").select("*").order("sort_order"),
+      supabase
+        .from("gallery_photos")
+        .select("*")
+        .eq("is_published", true)
+        .order("sort_order"),
+    ]);
 
   const sponsors: Sponsor[] = sponsorData ?? [];
   const team: TeamMember[] = teamData ?? [];
+  const gallery: GalleryPhoto[] = galleryData ?? [];
   const ekDate = process.env.EK_DATE ?? "2026-08-10T00:00:00+02:00";
 
-  const slides = buildSlides(sponsors, team, ekDate);
+  const slides = buildSlides(sponsors, team, ekDate, gallery);
 
   return <Slideshow slides={slides} />;
 }

@@ -30,13 +30,6 @@ const MUTED = "8FA0BC";
 
 const LEVEL_LABEL = { gold: "Goud", silver: "Zilver", bronze: "Brons", partner: "Partner" };
 
-const GROUP_PHOTOS = [
-  "groepsfotos/IMG_6011.jpeg",
-  "groepsfotos/IMG_6015.jpeg",
-  "groepsfotos/IMG_6016.jpeg",
-  "groepsfotos/IMG_6017.jpeg",
-];
-
 const HEAD = { fontFace: "Barlow Condensed", bold: true, italic: true };
 const BODY = { fontFace: "Barlow" };
 
@@ -66,8 +59,15 @@ async function fetchImage(url, kind = "logo") {
   }
 }
 
-async function localImage(rel) {
-  return downscale(fs.readFileSync(path.join(root, "public", rel)), "photo");
+// Gallery photos may be remote Supabase URLs or site-relative public paths.
+async function galleryImage(url) {
+  if (url.startsWith("http")) return fetchImage(url, "photo");
+  try {
+    return await downscale(fs.readFileSync(path.join(root, "public", url)), "photo");
+  } catch (e) {
+    console.warn(`  ! local photo failed (${url}): ${e.message}`);
+    return null;
+  }
 }
 
 async function main() {
@@ -80,18 +80,25 @@ async function main() {
   );
 
   console.log("Fetching data…");
-  const [{ data: sponsorData }, { data: teamData }] = await Promise.all([
-    supabase.from("sponsors").select("*").order("sort_order"),
-    supabase.from("team_members").select("*").order("sort_order"),
-  ]);
+  const [{ data: sponsorData }, { data: teamData }, { data: galleryData }] =
+    await Promise.all([
+      supabase.from("sponsors").select("*").order("sort_order"),
+      supabase.from("team_members").select("*").order("sort_order"),
+      supabase
+        .from("gallery_photos")
+        .select("*")
+        .eq("is_published", true)
+        .order("sort_order"),
+    ]);
 
   const byOrder = (a, b) => a.sort_order - b.sort_order;
   const gold = (sponsorData || []).filter((s) => s.level === "gold").sort(byOrder);
   const silver = (sponsorData || []).filter((s) => s.level === "silver").sort(byOrder);
   const skippers = (teamData || []).filter((m) => m.role === "Skipper").sort(byOrder);
+  const gallery = galleryData || [];
   const ekDate = process.env.EK_DATE || "2026-08-10T00:00:00+02:00";
 
-  console.log(`  ${gold.length} gold, ${silver.length} silver sponsors, ${skippers.length} skippers`);
+  console.log(`  ${gold.length} gold, ${silver.length} silver sponsors, ${skippers.length} skippers, ${gallery.length} gallery photos`);
   console.log("Embedding images…");
 
   // Pre-fetch every remote image once.
@@ -201,10 +208,12 @@ async function main() {
     });
   }
 
-  // 5) Group photos
-  for (const rel of GROUP_PHOTOS) {
+  // 5) Action photos from the homepage gallery
+  for (const photo of gallery) {
+    const data = await galleryImage(photo.image_url);
+    if (!data) continue; // skip a photo whose image couldn't be loaded
     const s = pptx.addSlide(); bg(s);
-    s.addImage({ data: await localImage(rel), x: 0, y: 0, w: W, h: H, sizing: { type: "cover", w: W, h: H } });
+    s.addImage({ data, x: 0, y: 0, w: W, h: H, sizing: { type: "cover", w: W, h: H } });
     s.addShape(pptx.ShapeType.rect, { x: 0, y: H - 2, w: W, h: 2, fill: { color: NAVY, transparency: 35 }, line: { type: "none" } });
     s.addText("Samen naar Noorwegen", { x: 0.6, y: H - 1.4, w: 10, h: 0.9, ...HEAD, color: WHITE, fontSize: 40 });
   }
