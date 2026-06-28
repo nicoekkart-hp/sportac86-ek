@@ -12,6 +12,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import PptxGenJS from "pptxgenjs";
 import sharp from "sharp";
+import JSZip from "jszip";
 import { createClient } from "@supabase/supabase-js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -34,26 +35,79 @@ const LEVEL_ADJECTIVE = { gold: "Gouden", silver: "Zilveren", bronze: "Bronzen",
 const HEAD = { fontFace: "Barlow Condensed", bold: true, italic: true };
 const BODY = { fontFace: "Barlow" };
 
-// Downscale to keep the .pptx small. Logos: cap at 800px, preserve alpha (png).
-// Photos: cap at 1920px, flatten to jpeg — plenty for a projector.
-async function downscale(buf, kind) {
+// Largest box of the given aspect ratio (w/h) that fits inside maxW × maxH.
+function fitBox(maxW, maxH, aspect) {
+  let w = maxW, h = w / aspect;
+  if (h > maxH) { h = maxH; w = h * aspect; }
+  return { w, h };
+}
+
+const ADVANCE_MS = 8000; // auto-advance every slide after 8s
+
+// pptxgenjs can't emit slide-advance timing or a kiosk loop, so patch the
+// written .pptx (a zip) directly: add a fade transition + timed auto-advance
+// to every slide, and set the show to loop continuously.
+async function addAutoLoop(filePath, advanceMs) {
+  const buf = fs.readFileSync(filePath);
+  const zip = await JSZip.loadAsync(buf);
+
+  const slideNames = Object.keys(zip.files).filter((n) =>
+    /^ppt\/slides\/slide\d+\.xml$/.test(n),
+  );
+  for (const name of slideNames) {
+    let xml = await zip.file(name).async("string");
+    if (!xml.includes("<p:transition")) {
+      // The transition element must sit right after </p:cSld>.
+      const transition =
+        `<p:transition spd="med" advTm="${advanceMs}"><p:fade/></p:transition>`;
+      xml = xml.replace("</p:cSld>", `</p:cSld>${transition}`);
+      zip.file(name, xml);
+    }
+  }
+
+  // Loop the slideshow (kiosk-style) and advance using the slide timings.
+  let pres = await zip.file("ppt/presentation.xml").async("string");
+  if (!pres.includes("<p:showPr")) {
+    const showPr = `<p:showPr loop="1" showNarration="0"><p:present/><p:sldAll/></p:showPr>`;
+    pres = pres.replace("</p:presentation>", `${showPr}</p:presentation>`);
+    zip.file("ppt/presentation.xml", pres);
+  }
+
+  const out = await zip.generateAsync({ type: "nodebuffer", compression: "DEFLATE" });
+  fs.writeFileSync(filePath, out);
+}
+
+// Pre-shape every image to the EXACT aspect ratio of the box it will sit in,
+// so addImage can place it 1:1 with no `sizing` option. Passing `sizing` to
+// pptxgenjs is what makes LibreOffice/PowerPoint stretch (skew) images, so we
+// avoid it entirely by baking the fit into the pixels with sharp.
+//
+//   kind "logo"     → contain onto a white canvas (no crop, no stretch)
+//   kind "portrait" → 3:4 cover, top-anchored (heads never cut off)
+//   kind "photo"    → 16:9 cover (full-bleed action shots)
+async function shape(buf, kind) {
+  const img = sharp(buf, { failOn: "none" }).rotate(); // honor EXIF orientation
   if (kind === "logo") {
-    const out = await sharp(buf, { failOn: "none" })
-      .resize({ width: 800, height: 800, fit: "inside", withoutEnlargement: true })
-      .png({ compressionLevel: 9 })
+    const out = await img
+      .resize({
+        width: 1000, height: 750, fit: "contain",
+        background: { r: 255, g: 255, b: 255, alpha: 1 },
+      })
+      // Flatten any remaining transparency onto white (not black) before JPEG.
+      .flatten({ background: { r: 255, g: 255, b: 255 } })
+      .jpeg({ quality: 88, mozjpeg: true })
       .toBuffer();
-    return `data:image/png;base64,${out.toString("base64")}`;
+    return `data:image/jpeg;base64,${out.toString("base64")}`;
   }
   if (kind === "portrait") {
-    // Headshots: crop to 3:4 anchored at the top so heads are never cut off.
-    const out = await sharp(buf, { failOn: "none" })
+    const out = await img
       .resize({ width: 600, height: 800, fit: "cover", position: "top" })
       .jpeg({ quality: 82, mozjpeg: true })
       .toBuffer();
     return `data:image/jpeg;base64,${out.toString("base64")}`;
   }
-  const out = await sharp(buf, { failOn: "none" })
-    .resize({ width: 1920, height: 1920, fit: "inside", withoutEnlargement: true })
+  const out = await img
+    .resize({ width: 1920, height: 1080, fit: "cover" })
     .jpeg({ quality: 80, mozjpeg: true })
     .toBuffer();
   return `data:image/jpeg;base64,${out.toString("base64")}`;
@@ -63,7 +117,7 @@ async function fetchImage(url, kind = "logo") {
   try {
     const res = await fetch(url, { signal: AbortSignal.timeout(15000) });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    return await downscale(Buffer.from(await res.arrayBuffer()), kind);
+    return await shape(Buffer.from(await res.arrayBuffer()), kind);
   } catch (e) {
     console.warn(`  ! image failed (${url.slice(0, 60)}…): ${e.message}`);
     return null;
@@ -74,7 +128,7 @@ async function fetchImage(url, kind = "logo") {
 async function galleryImage(url) {
   if (url.startsWith("http")) return fetchImage(url, "photo");
   try {
-    return await downscale(fs.readFileSync(path.join(root, "public", url)), "photo");
+    return await shape(fs.readFileSync(path.join(root, "public", url)), "photo");
   } catch (e) {
     console.warn(`  ! local photo failed (${url}): ${e.message}`);
     return null;
@@ -173,8 +227,12 @@ async function main() {
         const yy = y + row * (cardH + gap);
         s.addShape(pptx.ShapeType.roundRect, { x, y: yy, w: cardW, h: cardH, fill: { color: WHITE }, rectRadius: 0.08, line: { type: "none" } });
         const logo = logoCache.get(sp.id);
-        if (logo) s.addImage({ data: logo, x: x + 0.15, y: yy + 0.12, w: cardW - 0.3, h: cardH - 0.24, sizing: { type: "contain", w: cardW - 0.3, h: cardH - 0.24 } });
-        else s.addText(sp.name, { x, y: yy, w: cardW, h: cardH, ...HEAD, color: NAVY, fontSize: 14, align: "center", valign: "middle" });
+        if (logo) {
+          // Logo is baked to 4:3 on white; place it as the largest 4:3 box
+          // that fits inside the card padding, centered. No `sizing` → no skew.
+          const box = fitBox(cardW - 0.24, cardH - 0.2, 4 / 3);
+          s.addImage({ data: logo, x: x + (cardW - box.w) / 2, y: yy + (cardH - box.h) / 2, w: box.w, h: box.h });
+        } else s.addText(sp.name, { x, y: yy, w: cardW, h: cardH, ...HEAD, color: NAVY, fontSize: 14, align: "center", valign: "middle" });
       });
     };
     drawRow("Goud", gold, 2.1, 5, 1.3);
@@ -188,8 +246,10 @@ async function main() {
     const cardW = 7.5, cardH = 4.2, cx = (W - cardW) / 2, cy = 1.4;
     s.addShape(pptx.ShapeType.roundRect, { x: cx, y: cy, w: cardW, h: cardH, fill: { color: WHITE }, rectRadius: 0.12, line: { type: "none" } });
     const logo = logoCache.get(sp.id);
-    if (logo) s.addImage({ data: logo, x: cx + 0.5, y: cy + 0.4, w: cardW - 1, h: cardH - 0.8, sizing: { type: "contain", w: cardW - 1, h: cardH - 0.8 } });
-    else s.addText(sp.name, { x: cx, y: cy, w: cardW, h: cardH, ...HEAD, color: NAVY, fontSize: 40, align: "center", valign: "middle" });
+    if (logo) {
+      const box = fitBox(cardW - 1, cardH - 0.8, 4 / 3);
+      s.addImage({ data: logo, x: cx + (cardW - box.w) / 2, y: cy + (cardH - box.h) / 2, w: box.w, h: box.h });
+    } else s.addText(sp.name, { x: cx, y: cy, w: cardW, h: cardH, ...HEAD, color: NAVY, fontSize: 40, align: "center", valign: "middle" });
     s.addText(sp.name, { x: 0, y: 5.9, w: W, h: 1, ...HEAD, color: WHITE, fontSize: 44, align: "center" });
   }
 
@@ -210,7 +270,8 @@ async function main() {
       const y = 1.8 + row * rowPitch;
       const img = skipperImg.get(m.id);
       if (img) {
-        s.addImage({ data: img, x, y, w: pw, h: ph, rounding: true, sizing: { type: "cover", w: pw, h: ph } });
+        // Image is baked to 3:4 already; box is 3:4 → place 1:1, no `sizing`.
+        s.addImage({ data: img, x, y, w: pw, h: ph, rounding: true });
       } else {
         s.addShape(pptx.ShapeType.roundRect, { x, y, w: pw, h: ph, fill: { color: "2A3B5C" }, rectRadius: 0.1, line: { type: "none" } });
       }
@@ -225,13 +286,18 @@ async function main() {
     const data = await galleryImage(photo.image_url);
     if (!data) continue; // skip a photo whose image couldn't be loaded
     const s = pptx.addSlide(); bg(s);
-    s.addImage({ data, x: 0, y: 0, w: W, h: H, sizing: { type: "cover", w: W, h: H } });
+    // Image baked to 16:9; slide is 16:9 → place full-bleed, no `sizing`.
+    s.addImage({ data, x: 0, y: 0, w: W, h: H });
     s.addShape(pptx.ShapeType.rect, { x: 0, y: H - 2, w: W, h: 2, fill: { color: NAVY, transparency: 35 }, line: { type: "none" } });
     s.addText("Samen naar Noorwegen", { x: 0.6, y: H - 1.4, w: 10, h: 0.9, ...HEAD, color: WHITE, fontSize: 40 });
   }
 
   console.log(`Writing ${path.relative(root, outPath)}…`);
   await pptx.writeFile({ fileName: outPath });
+
+  console.log("Adding auto-advance timings + loop…");
+  await addAutoLoop(outPath, ADVANCE_MS);
+
   console.log(`Done. ${pptx.slides.length} slides.`);
 }
 
