@@ -257,7 +257,6 @@ async function main() {
   {
     const s = pptx.addSlide(); bg(s);
     eyebrow(s, "Onze skippers");
-    s.addText("De atletes die ons land vertegenwoordigen op het EK.", { x: 0.6, y: 0.95, w: 11, h: 0.5, ...BODY, color: MUTED, fontSize: 16 });
     const n = skippers.length;
     const cols = n <= 4 ? n : Math.ceil(n / 2);
     const pw = 1.5, ph = 2.0, gap = 0.45; // 3:4 portrait frames

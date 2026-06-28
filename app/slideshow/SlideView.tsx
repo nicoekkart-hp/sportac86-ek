@@ -120,12 +120,9 @@ export function SlideView({ slide, active }: { slide: Slide; active: boolean }) 
       const cols = n <= 5 ? n : Math.ceil(n / 2);
       return (
         <div className="h-full w-full flex flex-col px-[5vw] py-[5vh]">
-          <h2 className={`${heading} text-[5vw] mb-2`}>
+          <h2 className={`${heading} text-[5vw] mb-6`}>
             Onze <em className="not-italic text-red-sportac">skippers</em>
           </h2>
-          <p className="text-white/60 text-[1.5vw] mb-6">
-            Dit zijn de atletes die ons land vertegenwoordigen op het EK.
-          </p>
           <div
             className="flex-1 grid gap-5 items-center justify-center min-h-0"
             style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}
