@@ -11,10 +11,19 @@ export type Slide =
   | { kind: "roster"; skippers: TeamMember[] }
   | { kind: "photo"; src: string; index: number; total: number };
 
+// Noun form — used as a standalone tier label (wall headers, badges).
 export const LEVEL_LABEL: Record<Sponsor["level"], string> = {
   gold: "Goud",
   silver: "Zilver",
   bronze: "Brons",
+  partner: "Partner",
+};
+
+// Adjective form — used before "sponsor" (e.g. "Gouden sponsor").
+export const LEVEL_ADJECTIVE: Record<Sponsor["level"], string> = {
+  gold: "Gouden",
+  silver: "Zilveren",
+  bronze: "Bronzen",
   partner: "Partner",
 };
 

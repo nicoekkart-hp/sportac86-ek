@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { Slide, LEVEL_LABEL } from "./slides";
+import { Slide, LEVEL_ADJECTIVE } from "./slides";
 import { Sponsor } from "@/lib/types";
 
 const heading = "font-condensed font-black italic leading-none text-white";
@@ -107,7 +107,7 @@ export function SlideView({ slide, active }: { slide: Slide; active: boolean }) 
       const s = slide.sponsor;
       return (
         <div className="h-full w-full flex flex-col items-center justify-center px-12 text-center">
-          <Eyebrow>{LEVEL_LABEL[s.level]} sponsor</Eyebrow>
+          <Eyebrow>{LEVEL_ADJECTIVE[s.level]} sponsor</Eyebrow>
           <LogoCard sponsor={s} className="w-[55vw] h-[48vh] max-w-[900px]" />
           <h2 className={`${heading} text-[4.5vw] mt-8`}>{s.name}</h2>
         </div>
@@ -132,13 +132,13 @@ export function SlideView({ slide, active }: { slide: Slide; active: boolean }) 
           >
             {slide.skippers.map((m) => (
               <div key={m.id} className="flex flex-col items-center">
-                <div className="aspect-square w-full max-w-[18vh] rounded-2xl overflow-hidden bg-white/10 ring-2 ring-white/10">
+                <div className="aspect-[3/4] w-full max-w-[18vh] rounded-2xl overflow-hidden bg-white/10 ring-2 ring-white/10">
                   {m.image_url ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={m.image_url}
                       alt={m.name}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-cover object-top"
                     />
                   ) : null}
                 </div>

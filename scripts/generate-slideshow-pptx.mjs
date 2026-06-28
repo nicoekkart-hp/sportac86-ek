@@ -29,6 +29,7 @@ const WHITE = "FFFFFF";
 const MUTED = "8FA0BC";
 
 const LEVEL_LABEL = { gold: "Goud", silver: "Zilver", bronze: "Brons", partner: "Partner" };
+const LEVEL_ADJECTIVE = { gold: "Gouden", silver: "Zilveren", bronze: "Bronzen", partner: "Partner" };
 
 const HEAD = { fontFace: "Barlow Condensed", bold: true, italic: true };
 const BODY = { fontFace: "Barlow" };
@@ -36,15 +37,25 @@ const BODY = { fontFace: "Barlow" };
 // Downscale to keep the .pptx small. Logos: cap at 800px, preserve alpha (png).
 // Photos: cap at 1920px, flatten to jpeg — plenty for a projector.
 async function downscale(buf, kind) {
-  const max = kind === "logo" ? 800 : 1920;
-  let img = sharp(buf, { failOn: "none" }).resize({
-    width: max, height: max, fit: "inside", withoutEnlargement: true,
-  });
   if (kind === "logo") {
-    const out = await img.png({ compressionLevel: 9 }).toBuffer();
+    const out = await sharp(buf, { failOn: "none" })
+      .resize({ width: 800, height: 800, fit: "inside", withoutEnlargement: true })
+      .png({ compressionLevel: 9 })
+      .toBuffer();
     return `data:image/png;base64,${out.toString("base64")}`;
   }
-  const out = await img.jpeg({ quality: 80, mozjpeg: true }).toBuffer();
+  if (kind === "portrait") {
+    // Headshots: crop to 3:4 anchored at the top so heads are never cut off.
+    const out = await sharp(buf, { failOn: "none" })
+      .resize({ width: 600, height: 800, fit: "cover", position: "top" })
+      .jpeg({ quality: 82, mozjpeg: true })
+      .toBuffer();
+    return `data:image/jpeg;base64,${out.toString("base64")}`;
+  }
+  const out = await sharp(buf, { failOn: "none" })
+    .resize({ width: 1920, height: 1920, fit: "inside", withoutEnlargement: true })
+    .jpeg({ quality: 80, mozjpeg: true })
+    .toBuffer();
   return `data:image/jpeg;base64,${out.toString("base64")}`;
 }
 
@@ -108,7 +119,7 @@ async function main() {
   }
   const skipperImg = new Map();
   for (const m of skippers) {
-    if (m.image_url) skipperImg.set(m.id, await fetchImage(m.image_url, "photo"));
+    if (m.image_url) skipperImg.set(m.id, await fetchImage(m.image_url, "portrait"));
   }
 
   const pptx = new PptxGenJS();
@@ -173,7 +184,7 @@ async function main() {
   // 3) Per-sponsor slides
   for (const sp of [...gold, ...silver]) {
     const s = pptx.addSlide(); bg(s);
-    s.addText(`${LEVEL_LABEL[sp.level].toUpperCase()} SPONSOR`, { x: 0, y: 0.7, w: W, h: 0.4, ...BODY, bold: true, color: RED, fontSize: 14, charSpacing: 3, align: "center" });
+    s.addText(`${LEVEL_ADJECTIVE[sp.level].toUpperCase()} SPONSOR`, { x: 0, y: 0.7, w: W, h: 0.4, ...BODY, bold: true, color: RED, fontSize: 14, charSpacing: 3, align: "center" });
     const cardW = 7.5, cardH = 4.2, cx = (W - cardW) / 2, cy = 1.4;
     s.addShape(pptx.ShapeType.roundRect, { x: cx, y: cy, w: cardW, h: cardH, fill: { color: WHITE }, rectRadius: 0.12, line: { type: "none" } });
     const logo = logoCache.get(sp.id);
@@ -189,22 +200,23 @@ async function main() {
     s.addText("De atletes die ons land vertegenwoordigen op het EK.", { x: 0.6, y: 0.95, w: 11, h: 0.5, ...BODY, color: MUTED, fontSize: 16 });
     const n = skippers.length;
     const cols = n <= 4 ? n : Math.ceil(n / 2);
-    const photo = 1.7, gap = 0.4;
-    const totalW = cols * photo + (cols - 1) * gap;
+    const pw = 1.5, ph = 2.0, gap = 0.45; // 3:4 portrait frames
+    const rowPitch = ph + 0.9;
+    const totalW = cols * pw + (cols - 1) * gap;
     const startX = (W - totalW) / 2;
     skippers.forEach((m, i) => {
       const col = i % cols, row = Math.floor(i / cols);
-      const x = startX + col * (photo + gap);
-      const y = 1.9 + row * 2.6;
+      const x = startX + col * (pw + gap);
+      const y = 1.8 + row * rowPitch;
       const img = skipperImg.get(m.id);
       if (img) {
-        s.addImage({ data: img, x, y, w: photo, h: photo, rounding: true, sizing: { type: "cover", w: photo, h: photo } });
+        s.addImage({ data: img, x, y, w: pw, h: ph, rounding: true, sizing: { type: "cover", w: pw, h: ph } });
       } else {
-        s.addShape(pptx.ShapeType.roundRect, { x, y, w: photo, h: photo, fill: { color: "2A3B5C" }, rectRadius: 0.1, line: { type: "none" } });
+        s.addShape(pptx.ShapeType.roundRect, { x, y, w: pw, h: ph, fill: { color: "2A3B5C" }, rectRadius: 0.1, line: { type: "none" } });
       }
-      s.addText(m.name, { x: x - 0.4, y: y + photo + 0.05, w: photo + 0.8, h: 0.4, ...HEAD, color: WHITE, fontSize: 20, align: "center" });
+      s.addText(m.name, { x: x - 0.4, y: y + ph + 0.05, w: pw + 0.8, h: 0.4, ...HEAD, color: WHITE, fontSize: 20, align: "center" });
       if (m.discipline?.length)
-        s.addText(m.discipline.join(" · ").toUpperCase(), { x: x - 0.4, y: y + photo + 0.45, w: photo + 0.8, h: 0.3, ...BODY, bold: true, color: RED, fontSize: 11, charSpacing: 2, align: "center" });
+        s.addText(m.discipline.join(" · ").toUpperCase(), { x: x - 0.4, y: y + ph + 0.45, w: pw + 0.8, h: 0.3, ...BODY, bold: true, color: RED, fontSize: 11, charSpacing: 2, align: "center" });
     });
   }
 
